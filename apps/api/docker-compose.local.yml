@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: travel-app-postgres-local
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: travel_app_local
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-local-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d travel_app_local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  postgres-local-data:

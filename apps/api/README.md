@@ -15,12 +15,14 @@ Backend for the Travel App mobile client.
 
 ```bash
 npm install
+npm --prefix apps/api run db:local:up
 npm --prefix apps/api run db:sync
 npm --prefix apps/api run storage:verify
 npm --prefix apps/api run dev
 ```
 
 Create `apps/api/.env` from `apps/api/.env.example` before starting the API.
+Nếu test local bằng PostgreSQL trên máy, dùng `apps/api/local-postgres.env.example` làm mẫu thay vì `.env.example`.
 
 ## Required environment variables
 
@@ -33,6 +35,12 @@ Create `apps/api/.env` from `apps/api/.env.example` before starting the API.
 - `UPLOADS_DIR`
 - `ALLOWED_ORIGINS`
 - `TRUST_PROXY`
+
+For production on Azure:
+
+- `DATABASE_URL` and `DIRECT_URL` must point to `*.postgres.database.azure.com`
+- both URLs must include `sslmode=require`
+- `PUBLIC_BASE_URL` should be the public HTTPS domain of the API
 
 `PUBLIC_BASE_URL` must point to the public backend URL so upload endpoints can return absolute image URLs for the mobile app.
 Set `TRUST_PROXY=true` when running behind Coolify or another reverse proxy.

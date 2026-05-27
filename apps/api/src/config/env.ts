@@ -10,7 +10,54 @@ function parseAllowedOrigins(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
-export const env = {
+function isAzurePostgresConnection(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "postgresql:" && url.hostname.endsWith(".postgres.database.azure.com");
+  } catch {
+    return false;
+  }
+}
+
+function hasRequiredSslMode(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.searchParams.get("sslmode") === "require";
+  } catch {
+    return false;
+  }
+}
+
+function validateProductionEnv(config: {
+  nodeEnv: string;
+  databaseUrl: string;
+  directUrl: string;
+  publicBaseUrl: string;
+}) {
+  if (config.nodeEnv !== "production") {
+    return;
+  }
+
+  if (!config.databaseUrl || !config.directUrl) {
+    throw new Error("Môi trường production bắt buộc phải có DATABASE_URL và DIRECT_URL.");
+  }
+
+  if (!isAzurePostgresConnection(config.databaseUrl) || !isAzurePostgresConnection(config.directUrl)) {
+    throw new Error(
+      "Môi trường production phải dùng Azure Database for PostgreSQL với hostname dạng *.postgres.database.azure.com.",
+    );
+  }
+
+  if (!hasRequiredSslMode(config.databaseUrl) || !hasRequiredSslMode(config.directUrl)) {
+    throw new Error("Connection string PostgreSQL production phải có sslmode=require.");
+  }
+
+  if (!config.publicBaseUrl.startsWith("https://")) {
+    throw new Error("PUBLIC_BASE_URL của production phải là HTTPS.");
+  }
+}
+
+const loadedEnv = {
   appName: process.env.APP_NAME || "Travel App",
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT) || 8000,
@@ -34,3 +81,7 @@ export const env = {
     process.env.TRUST_PROXY === "true" ||
     process.env.TRUST_PROXY === "yes",
 };
+
+validateProductionEnv(loadedEnv);
+
+export const env = loadedEnv;

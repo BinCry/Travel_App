@@ -1,0 +1,20 @@
+appId: com.bincry.travelapp
+env:
+  OWNER_EMAIL: owner@example.com
+  OWNER_PASSWORD: secret123
+---
+- launchApp
+- tapOn: "Đăng nhập"
+- tapOn: "Địa chỉ email"
+- inputText: ${OWNER_EMAIL}
+- tapOn: "Mật khẩu"
+- inputText: ${OWNER_PASSWORD}
+- tapOn: "Đăng nhập"
+- tapOn: "Quản lý"
+- assertVisible: "Quản lý địa điểm"
+- tapOn: "+ Thêm địa điểm mới"
+- assertVisible: "Thêm địa điểm"
+- back
+- tapOn: "Hồ sơ"
+- tapOn: "Đăng xuất"
+- assertVisible: "Đăng xuất"

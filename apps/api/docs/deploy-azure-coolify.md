@@ -1,23 +1,24 @@
-# Azure VPS + Coolify Deployment
+# Deploy backend lên Azure VPS bằng Coolify
 
-## Stack
+## Hạ tầng đích
 
-- App host: Azure VPS
-- Process / deployment manager: Coolify
+- VPS: Azure
+- Quản lý deploy: Coolify
 - Database: Azure Database for PostgreSQL
-- File uploads: local persistent volume mounted to `/app/uploads`
+- Uploads: volume local persistent mount vào `/app/uploads`
+- Nhánh deploy: `deploy`
 
-## Coolify service settings
+## Cấu hình service trong Coolify
 
-- Build source: GitHub repo
-- Branch: your deployment branch
+- Source: GitHub repository
+- Branch: `deploy`
 - Build context: repository root
 - Dockerfile path: `apps/api/Dockerfile`
 - Exposed port: `3000`
-- Persistent volume: mount a writable volume to `/app/uploads`
-- Health check: use the container `HEALTHCHECK` or point Coolify to `/health`
+- Health check: `/health`
+- Persistent volume: `/app/uploads`
 
-## Required environment variables
+## Biến môi trường bắt buộc
 
 ```env
 APP_NAME=Travel App
@@ -39,26 +40,40 @@ TRUST_PROXY=true
 ALLOWED_ORIGINS=
 ```
 
-## First deploy checklist
+## Luồng hoạt động CI/CD
 
-1. Create the Coolify service from GitHub.
-2. Add the env vars above in Coolify.
-3. Attach a persistent volume to `/app/uploads`.
-4. Deploy once. The container runs `prisma migrate deploy` automatically before it starts the API.
-5. If you want demo data, open a terminal in the running service and run:
+1. code được push lên `main`
+2. GitHub Actions chạy workflow `CI`
+3. khi toàn bộ job pass, workflow `Promote Deploy` push commit đó sang `deploy`
+4. Coolify phát hiện thay đổi ở `deploy` và tự redeploy
+
+## Checklist deploy lần đầu
+
+1. Tạo service trong Coolify từ repo GitHub.
+2. Chọn nhánh `deploy`.
+3. Điền toàn bộ env ở trên.
+4. Mount volume ghi được vào `/app/uploads`.
+5. Deploy.
+6. Xác minh log container đã chạy `prisma migrate deploy`.
+7. Nếu cần dữ liệu demo:
 
 ```bash
 npm run db:seed
 ```
 
-6. Run `npm run storage:verify` inside the container if you need to confirm the upload volume is writable.
-7. Set `EXPO_PUBLIC_API_BASE_URL=https://your-api-domain.example.com` in the mobile app build environment before generating Android preview/production builds.
+8. Kiểm tra:
+   - `/health`
+   - đăng ký + xác minh email
+   - quên mật khẩu
+   - upload avatar
+   - upload ảnh review
+   - owner tạo địa điểm
+   - AI trip planning
 
-## Behavior notes
+## Ghi chú quan trọng
 
-- Upload endpoints now write files to local disk and return absolute URLs based on `PUBLIC_BASE_URL`.
-- Auth now requires email verification, so SMTP must work in production before users can register and log in.
-- If `PUBLIC_BASE_URL` is wrong, mobile clients will receive invalid image URLs.
-- If the volume is missing or read-only, uploads return `STORAGE_UNAVAILABLE`.
-- `/health` returns `503` when either PostgreSQL or local storage is unavailable, which is useful for Coolify restarts and monitoring.
-- `/api/v1/ai/trip-plan` returns `AI_UNAVAILABLE` when Gemini credentials are missing or the provider is unavailable, and `AI_RATE_LIMITED` when the provider throttles requests.
+- Nếu `PUBLIC_BASE_URL` sai, mobile sẽ nhận URL ảnh sai.
+- Nếu SMTP không hoạt động, người dùng mới sẽ không thể xác minh email hoặc đặt lại mật khẩu.
+- Nếu Gemini credentials sai, API AI sẽ trả `AI_UNAVAILABLE`.
+- Nếu volume upload không ghi được, API upload sẽ trả `STORAGE_UNAVAILABLE`.
+- Nếu Azure PostgreSQL chưa mở firewall hoặc SSL không đúng, `/health` sẽ fail.

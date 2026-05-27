@@ -1,10 +1,19 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const prisma = new PrismaClient();
 
 async function main() {
+  const verifiedAt = new Date();
+
   await prisma.promotion.deleteMany();
   await prisma.reviewLike.deleteMany();
   await prisma.reviewImage.deleteMany();
@@ -14,11 +23,13 @@ async function main() {
   await prisma.user.deleteMany();
 
   const demoHash = await bcrypt.hash("demo1234", 10);
-  const user = await prisma.user.create({
+
+  const traveler = await prisma.user.create({
     data: {
       email: "demo@example.com",
       passwordHash: demoHash,
       role: "TRAVELER",
+      emailVerifiedAt: verifiedAt,
       fullName: "Alex Johnson",
       username: "Alex_love_travel",
       location: "Việt Nam",
@@ -32,6 +43,7 @@ async function main() {
       email: "owner@example.com",
       passwordHash: demoHash,
       role: "OWNER",
+      emailVerifiedAt: verifiedAt,
       fullName: "Owner Demo",
       username: "owner_demo",
       location: "Việt Nam",
@@ -58,7 +70,7 @@ async function main() {
   const review = await prisma.review.create({
     data: {
       placeId: firstPlace.id,
-      userId: user.id,
+      userId: traveler.id,
       rating: 4,
       content:
         "Đi bộ qua Gion lúc chạng vạng thật sự rất cuốn hút. Đèn lồng bắt đầu sáng lên và không khí cực kỳ dễ chịu.",
@@ -120,6 +132,11 @@ async function main() {
       },
     ],
   });
+
+  console.info("Đã nạp dữ liệu mẫu thành công.");
+  console.info("- Traveler: demo@example.com / demo1234");
+  console.info("- Owner: owner@example.com / demo1234");
+  console.info("Cả hai tài khoản đã được xác minh email và có thể đăng nhập ngay.");
 }
 
 main()

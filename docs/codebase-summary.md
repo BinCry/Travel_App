@@ -1,110 +1,202 @@
-# Travel App Codebase Summary
+# Tóm tắt codebase Travel App
 
-Updated: 2026-05-27
+Cập nhật: 2026-05-28
 
-## Repository shape
+## Cấu trúc monorepo
 
-- `apps/api`: Express + TypeScript + Prisma backend
-- `apps/mobile`: Expo / React Native mobile client
-- `packages/shared`: shared Zod-first contracts, response envelopes, error codes
+- `apps/api`: backend Express + TypeScript + Prisma
+- `apps/mobile`: ứng dụng Expo / React Native
+- `packages/shared`: shared contracts bằng Zod, response envelope, error code
 
-## Feature inventory
+## Mức độ hoàn thiện hiện tại
 
-### Backend modules
+- Backend nghiệp vụ cốt lõi: `85%`
+- Mobile luồng chính: `80%`
+- Phân quyền và xử lý lỗi người dùng: `80%`
+- QA tự động: `65%`
+- Đường deploy Azure VPS + Coolify: `80%`
+- APK nội bộ: `85%`
+- Play Store readiness: `60%`
 
-- `auth`
-  - đăng ký tài khoản
-  - gửi OTP xác minh email
-  - xác minh email và kích hoạt tài khoản
-  - gửi lại OTP xác minh
-  - đăng nhập bằng email/mật khẩu
-  - quên mật khẩu qua OTP email
-- `users`
-  - xem/cập nhật hồ sơ
-  - đổi mật khẩu
-  - xóa tài khoản vĩnh viễn
-  - xem đánh giá của chính mình
-  - xem địa điểm đã lưu
-- `places`
-  - danh sách địa điểm công khai
-  - chi tiết địa điểm
-  - danh sách đánh giá theo địa điểm
-- `reviews`
-  - tạo, sửa, xóa đánh giá của chính mình
-  - thích/bỏ thích đánh giá
-- `owner`
-  - CRUD địa điểm thuộc owner
-  - CRUD/toggle ưu đãi thuộc owner
-- `uploads`
-  - upload ảnh review
-  - upload ảnh bìa địa điểm
-  - upload ảnh đại diện
-- `ai`
-  - gợi ý kế hoạch du lịch qua Gemini
-- `health`
-  - kiểm tra PostgreSQL + storage local
+## Tính năng backend đã có
 
-### Mobile flows
+### `auth`
 
-- khách chưa đăng nhập
-  - đăng nhập
-  - đăng ký
-  - chọn loại tài khoản traveler hoặc owner khi đăng ký
-  - xem điều khoản sử dụng
-  - xác minh email
-  - quên mật khẩu
-- traveler
-  - duyệt địa điểm
-  - xem chi tiết
-  - lưu/bỏ lưu địa điểm
-  - viết đánh giá
-  - xem đánh giá của mình
-  - chỉnh sửa hồ sơ
+- đăng ký tài khoản `traveler` hoặc `owner`
+- gửi OTP xác minh email
+- xác minh email và cấp JWT
+- gửi lại OTP xác minh
+- đăng nhập email / mật khẩu
+- quên mật khẩu bằng OTP email
+- đặt lại mật khẩu
+
+### `users`
+
+- xem hồ sơ hiện tại
+- cập nhật hồ sơ
+- đổi mật khẩu
+- xóa tài khoản vĩnh viễn
+- xem review của chính mình
+- xem danh sách địa điểm đã lưu
+
+### `places`
+
+- danh sách địa điểm công khai
+- lọc theo danh mục chuẩn
+- xem chi tiết địa điểm
+- xem danh sách review theo địa điểm
+
+### `reviews`
+
+- tạo review
+- sửa / xóa review của chính mình
+- thích / bỏ thích review
+
+### `favorites`
+
+- thêm / xóa địa điểm yêu thích
+- lấy danh sách địa điểm đã lưu
+
+### `owner`
+
+- xem danh sách địa điểm của owner
+- tạo / sửa / xóa địa điểm của owner
+- tạo / sửa / bật tắt / xóa ưu đãi của owner
+
+### `uploads`
+
+- upload ảnh review
+- upload ảnh bìa địa điểm
+- upload ảnh đại diện
+
+### `ai`
+
+- gợi ý kế hoạch du lịch bằng Gemini
+
+### `health`
+
+- kiểm tra kết nối PostgreSQL
+- kiểm tra quyền ghi thư mục upload
+
+## Tính năng mobile đã có
+
+### Người dùng chưa đăng nhập
+
+- đăng nhập
+- đăng ký
+- chọn loại tài khoản `traveler` hoặc `owner`
+- xem điều khoản sử dụng
+- xác minh email
+- quên mật khẩu
+
+### Traveler
+
+- duyệt địa điểm
+- xem chi tiết địa điểm
+- lưu / bỏ lưu địa điểm
+- viết review
+- xem review của chính mình
+- chỉnh sửa hồ sơ
+- đổi mật khẩu
+- xóa tài khoản
+- đăng xuất
+- nhận gợi ý hành trình bằng AI
+
+### Owner
+
+- có toàn bộ quyền của traveler
+- thêm địa điểm
+- sửa / xóa địa điểm của mình
+- tạo / sửa / tắt / xóa ưu đãi
+
+## Phân quyền hiện tại
+
+### `anonymous`
+
+- chỉ được xem danh sách địa điểm, chi tiết địa điểm, review công khai
+- không được mutation
+
+### `traveler`
+
+- thao tác trên dữ liệu của chính mình:
+  - hồ sơ
+  - review
+  - favorites
   - đổi mật khẩu
   - xóa tài khoản
-  - đăng xuất
-  - lập kế hoạch bằng AI
-- owner
-  - toàn bộ quyền traveler
-  - thêm địa điểm
-  - sửa/xóa địa điểm của mình
-  - tạo/sửa/tắt/xóa ưu đãi
+  - AI trip planning
 
-## Current role model
+### `owner`
 
-- database roles: `TRAVELER`, `OWNER`
-- public/shared API roles: `traveler`, `owner`
-- không có `admin` trong phạm vi sản phẩm hiện tại
+- có toàn bộ quyền của traveler
+- chỉ được thao tác trên địa điểm và ưu đãi do chính mình sở hữu
+- không được sửa / xóa dữ liệu owner khác
 
-## Canonical public categories
+## Quy ước dữ liệu công khai
 
-- `attractions`
-- `dining`
-- `festivals`
+- role công khai: `traveler | owner`
+- category công khai: `attractions | dining | festivals`
+- response API: `ApiResponse`
+- mọi lỗi nghiệp vụ đi qua error code dùng chung
 
-## Cross-feature impact
+## Kiểm thử hiện có
 
-- `auth` là nền cho toàn bộ mutation của traveler và owner
-- `email verification` chặn đăng nhập cho tài khoản chưa kích hoạt
-- `users` cấp dữ liệu cho profile, avatar, saved places, reviews, delete account
-- `places` là đầu vào cho favorites, reviews, owner detail, AI gợi ý
-- `reviews` tác động trực tiếp tới rating aggregate của place
-- `owner` phụ thuộc `uploads`, category chuẩn hóa và ownership guard
-- `uploads` phụ thuộc volume ghi được và `PUBLIC_BASE_URL`
-- `ai` phụ thuộc JWT, rate limit và Gemini credentials
+### Backend local-safe
 
-## Product readiness snapshot
+- `npm run verify:api`
+- `56` test pass
+- phủ các nhóm:
+  - auth
+  - users
+  - places
+  - reviews
+  - favorites
+  - owner
+  - uploads
+  - ai
+  - health
+  - pagination
 
-- backend build/test: xanh, `56` test pass
-- mobile typecheck/lint: xanh
-- OpenAPI: sinh từ code + shared contracts
-- Azure VPS + Coolify path: đã có tài liệu
-- auth/account core: đã có xác minh email, quên mật khẩu OTP, đổi mật khẩu, đăng xuất, xóa tài khoản
-- remote runtime fallback: đã bỏ khỏi các flow auth/account chính và avatar review/profile
+### Backend DB-backed
 
-## Remaining product gaps
+- đã có suite `tests/db`
+- chạy bằng `npm run verify:api:db`
+- cần PostgreSQL thật qua:
+  - Azure PostgreSQL
+  - PostgreSQL local
+  - service PostgreSQL trong GitHub Actions
 
-- chưa có DB-backed integration test với PostgreSQL thật
-- chưa có mobile automated tests bằng `jest-expo`
-- chưa có Android E2E flow bằng Maestro
-- chưa xác nhận deploy thật trên Coolify/Azure với SMTP và Gemini credentials thật
+### Mobile
+
+- `npm run verify:mobile`
+- `npm run test:mobile`
+- hiện có `11` test cho các màn và luồng chính:
+  - login
+  - register
+  - verify email
+  - delete account
+  - saved places
+  - owner management
+
+### Android E2E
+
+- đã thêm baseline flow Maestro trong `apps/mobile/.maestro`
+
+## CI/CD và deploy
+
+- nhánh phát triển chính: `main`
+- GitHub Actions:
+  - `CI`: chạy verify backend, verify mobile, storage check, DB-backed backend tests, mobile tests
+  - `Promote Deploy`: đồng bộ `main -> deploy` khi CI pass
+- Coolify:
+  - theo dõi nhánh `deploy`
+  - build từ repo root
+  - dùng `apps/api/Dockerfile`
+- database production: `Azure Database for PostgreSQL`
+
+## Khoảng trống còn lại trước khi xem là product hoàn chỉnh
+
+- chưa xác nhận live deploy thật trên Azure VPS + Coolify + Azure PostgreSQL + SMTP + Gemini
+- chưa build thử APK/AAB trên môi trường EAS thật trong lượt này
+- chưa đổi `android.package` sang danh tính phát hành cuối cùng cho Google Play
+- vẫn cần manual test trên thiết bị thật để bắt lỗi layout hoặc hành vi ngữ cảnh máy thật

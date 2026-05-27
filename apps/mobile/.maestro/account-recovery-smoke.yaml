@@ -1,0 +1,25 @@
+appId: com.bincry.travelapp
+env:
+  RECOVERY_EMAIL: traveler@example.com
+  RECOVERY_PASSWORD: secret123
+  RECOVERY_NEW_PASSWORD: secret456
+---
+- launchApp
+- tapOn: "Đăng nhập"
+- tapOn: "Quên mật khẩu?"
+- assertVisible: "Quên mật khẩu"
+- tapOn: "Địa chỉ email"
+- inputText: ${RECOVERY_EMAIL}
+- tapOn: "Gửi mã OTP"
+- assertVisible: "Đã gửi mã OTP"
+- back
+- back
+- tapOn: "Đăng nhập"
+- tapOn: "Địa chỉ email"
+- inputText: ${RECOVERY_EMAIL}
+- tapOn: "Mật khẩu"
+- inputText: ${RECOVERY_PASSWORD}
+- tapOn: "Đăng nhập"
+- tapOn: "Hồ sơ"
+- tapOn: "Đổi mật khẩu"
+- assertVisible: "Đổi mật khẩu"

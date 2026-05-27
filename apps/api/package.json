@@ -6,6 +6,7 @@
   "scripts": {
     "prebuild": "npm --prefix ../../packages/shared run build",
     "pretest": "npm --prefix ../../packages/shared run build",
+    "pretest:db": "node -e \"if (!process.env.DATABASE_URL) { throw new Error('DATABASE_URL là bắt buộc cho test:db'); }\" && npm --prefix ../../packages/shared run build",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
@@ -14,12 +15,18 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.mjs",
+    "db:create-test-accounts": "node scripts/database/create-test-accounts.mjs",
+    "db:local:up": "docker compose -f docker-compose.local.yml up -d",
+    "db:local:down": "docker compose -f docker-compose.local.yml down",
+    "db:local:reset": "docker compose -f docker-compose.local.yml down -v",
+    "db:local:logs": "docker compose -f docker-compose.local.yml logs -f postgres",
     "db:studio": "prisma studio",
     "db:sync": "prisma generate && prisma db push && npm run db:seed",
     "storage:verify": "tsx scripts/verify-storage.ts",
     "openapi:write": "tsx scripts/write-openapi.ts",
     "db:migrate:deploy": "prisma migrate deploy",
     "test": "vitest run",
+    "test:db": "vitest run --config vitest.db.config.ts",
     "test:watch": "vitest"
   },
   "dependencies": {

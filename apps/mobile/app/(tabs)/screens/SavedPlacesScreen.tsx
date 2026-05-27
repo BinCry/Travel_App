@@ -82,7 +82,7 @@ export default function SavedPlacesScreen({
               <Text style={screenStyles.cardTitle}>{item.name}</Text>
               <Text style={screenStyles.cardMeta}>{item.location}</Text>
               <Text style={screenStyles.cardMeta}>
-                Rating {item.rating} ({item.ratingCount})
+                Đánh giá {item.rating} ({item.ratingCount})
               </Text>
               <View style={screenStyles.actions}>
                 <TouchableOpacity

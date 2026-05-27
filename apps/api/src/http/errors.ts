@@ -42,17 +42,19 @@ export function httpErrorMiddleware(
     (err as { issues?: unknown }).issues !== undefined
       ? (err as { issues: unknown }).issues
       : undefined;
-  console.error(
-    JSON.stringify({
-      level: "error",
-      requestId: req.requestId,
-      path: req.originalUrl,
-      method: req.method,
-      status,
-      error: message,
-      issues,
-    })
-  );
+  if (process.env.NODE_ENV !== "test") {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        requestId: req.requestId,
+        path: req.originalUrl,
+        method: req.method,
+        status,
+        error: message,
+        issues,
+      })
+    );
+  }
   if (!res.headersSent) {
     res
       .status(status >= 400 && status < 600 ? status : 500)

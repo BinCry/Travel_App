@@ -7,6 +7,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "ignoreDeprecations": "5.0",
+    "types": ["jest"],
     "paths": {
       "@/*": ["./*"]
     }

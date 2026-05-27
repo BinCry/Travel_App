@@ -3,6 +3,9 @@ node_modules/
 .turbo/
 .claude/
 .codex/
+.env
+.env.*
+!.env.example
 dist/
 coverage/
 uploads/

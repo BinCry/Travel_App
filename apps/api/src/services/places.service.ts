@@ -35,9 +35,9 @@ function toListDto(p: {
 }
 
 function formatReviewDate(d: Date) {
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString("vi-VN", {
     day: "2-digit",
-    month: "short",
+    month: "2-digit",
     year: "numeric",
   });
 }
@@ -80,7 +80,7 @@ export const placesService = {
     if (!place) return null;
 
     const reviews = place.reviews.map((r): PlaceReview => {
-      const displayName = r.user.fullName || r.user.username || "Traveler";
+      const displayName = r.user.fullName || r.user.username || "Khách du lịch";
       return placeReviewSchema.parse({
         avatarUrl: r.user.avatarUrl,
         name: displayName,

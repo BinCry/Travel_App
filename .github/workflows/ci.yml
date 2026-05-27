@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Kiểm tra build và verify cơ bản
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout mã nguồn
+        uses: actions/checkout@v4
+
+      - name: Cài Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Cài dependencies
+        run: npm ci
+
+      - name: Verify backend mock/integration
+        run: npm run verify:api
+
+      - name: Verify mobile typecheck và lint
+        run: npm run verify:mobile
+
+      - name: Verify storage
+        run: npm run verify:storage
+
+  api-db:
+    name: Kiểm tra backend với PostgreSQL thật
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: travel_app_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d travel_app_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_NAME: Travel App
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/travel_app_test?schema=public
+      DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:5432/travel_app_test?schema=public
+      JWT_SECRET: ci-secret-for-tests
+      NODE_ENV: test
+      PORT: 8000
+      GEMINI_API_KEY: ""
+      GEMINI_MODEL: gemini-2.5-flash
+      SMTP_HOST: smtp.example.com
+      SMTP_PORT: 587
+      SMTP_USER: ci@example.com
+      SMTP_PASSWORD: ci-password
+      SMTP_FROM: Travel App <ci@example.com>
+      PUBLIC_BASE_URL: http://127.0.0.1:8000
+      UPLOADS_DIR: /tmp/travel-app-uploads
+      TRUST_PROXY: true
+      ALLOWED_ORIGINS: ""
+
+    steps:
+      - name: Checkout mã nguồn
+        uses: actions/checkout@v4
+
+      - name: Cài Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Cài dependencies
+        run: npm ci
+
+      - name: Chạy Prisma migrate lên PostgreSQL test
+        run: npm --prefix apps/api run db:migrate:deploy
+
+      - name: Chạy DB-backed API tests
+        run: npm run verify:api:db
+
+  mobile-tests:
+    name: Kiểm tra màn hình mobile tự động
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout mã nguồn
+        uses: actions/checkout@v4
+
+      - name: Cài Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Cài dependencies
+        run: npm ci
+
+      - name: Chạy test mobile
+        run: npm run test:mobile

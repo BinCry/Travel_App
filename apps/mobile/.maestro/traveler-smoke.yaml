@@ -1,0 +1,20 @@
+appId: com.bincry.travelapp
+env:
+  TRAVELER_EMAIL: traveler@example.com
+  TRAVELER_PASSWORD: secret123
+---
+- launchApp
+- tapOn: "Đăng nhập"
+- tapOn: "Địa chỉ email"
+- inputText: ${TRAVELER_EMAIL}
+- tapOn: "Mật khẩu"
+- inputText: ${TRAVELER_PASSWORD}
+- tapOn: "Đăng nhập"
+- assertVisible: "Chào mừng"
+- tapOn: "Khám phá"
+- tapOn: "Địa điểm đã lưu"
+- assertVisible: "Địa điểm đã lưu"
+- tapOn: "Quay lại"
+- tapOn: "Hồ sơ"
+- tapOn: "Đăng xuất"
+- assertVisible: "Đăng xuất"

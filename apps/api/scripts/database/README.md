@@ -20,6 +20,12 @@ Dùng chỗ này để gom các file **liên quan tới cơ sở dữ liệu**, 
 
 Hướng dẫn đầy đủ **cài máy chủ cục bộ**, **biến môi trường**, **triển khai** xem **`README.md` ở gốc dự án**.
 
+## Quy ước môi trường
+
+- Production và staging dùng **Azure Database for PostgreSQL**
+- Connection string production phải có `sslmode=require`
+- PostgreSQL local chỉ dành cho dev/test hoặc khi chạy CI cục bộ
+
 ## Thứ tự gợi ý khi mới vào nhóm hoặc dự án mới trên máy của bạn
 
 1. Sao chép `.env.example` thành `.env` và điền thông tin kết nối PostgreSQL.

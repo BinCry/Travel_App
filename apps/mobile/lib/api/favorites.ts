@@ -1,9 +1,10 @@
-import type { ApiOk, PlaceListItem } from './types';
-import { apiClient } from './client';
+import { z } from 'zod';
+import { placeListItemSchema, type PlaceListItem } from '@travel-app/shared/contracts/places';
+import { apiClient, parseApiData } from './client';
 
 export async function fetchFavorites(): Promise<PlaceListItem[]> {
-  const res = await apiClient.get<ApiOk<PlaceListItem[]>>('/users/me/favorites');
-  return res.data.data;
+  const res = await apiClient.get('/users/me/favorites');
+  return parseApiData(res.data, z.array(placeListItemSchema));
 }
 
 export async function addFavorite(placeId: string): Promise<void> {
