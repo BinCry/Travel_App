@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+.git
+.github
+.expo
+**/.expo
+coverage
+dist
+**/dist
+uploads
+apps/api/uploads
+refs
+tools
+plans
+.claude
+.codex
+npm-debug.log

@@ -1,0 +1,58 @@
+{
+  "name": "@travel-app/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./common": {
+      "types": "./dist/common.d.ts",
+      "default": "./dist/common.js"
+    },
+    "./contracts/auth": {
+      "types": "./dist/contracts/auth.d.ts",
+      "default": "./dist/contracts/auth.js"
+    },
+    "./contracts/owner": {
+      "types": "./dist/contracts/owner.d.ts",
+      "default": "./dist/contracts/owner.js"
+    },
+    "./contracts/places": {
+      "types": "./dist/contracts/places.d.ts",
+      "default": "./dist/contracts/places.js"
+    },
+    "./contracts/reviews": {
+      "types": "./dist/contracts/reviews.d.ts",
+      "default": "./dist/contracts/reviews.js"
+    },
+    "./contracts/uploads": {
+      "types": "./dist/contracts/uploads.d.ts",
+      "default": "./dist/contracts/uploads.js"
+    },
+    "./contracts/ai": {
+      "types": "./dist/contracts/ai.d.ts",
+      "default": "./dist/contracts/ai.js"
+    },
+    "./contracts/users": {
+      "types": "./dist/contracts/users.d.ts",
+      "default": "./dist/contracts/users.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^3.24.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "folders": [
+    {
+      "name": "api",
+      "path": "apps/api"
+    },
+    {
+      "name": "mobile",
+      "path": "apps/mobile"
+    },
+    {
+      "name": "shared",
+      "path": "packages/shared"
+    },
+    {
+      "name": "claude-kit",
+      "path": "tools/Claude_Kit"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.git": true,
+      "**/node_modules": true,
+      "**/dist": true
+    }
+  }
+}

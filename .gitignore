@@ -1,0 +1,14 @@
+node_modules/
+.expo/
+.turbo/
+.claude/
+.codex/
+dist/
+coverage/
+uploads/
+apps/api/uploads/
+apps/api/node_modules/
+apps/mobile/node_modules/
+packages/shared/dist/
+refs/
+tools/
