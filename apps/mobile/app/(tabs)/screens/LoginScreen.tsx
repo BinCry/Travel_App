@@ -3,6 +3,8 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -10,7 +12,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import styles from './LoginScreen.styles';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors } from '../common/colors';
+import { authStyles } from '../common/authTheme';
 import { toUserMessage } from '../common/errorMessages';
 import { getApiErrorMessage, useAuth } from '../context/AuthContext';
 import type { AppNavigationOnlyProps } from '../types/navigation';
@@ -53,130 +57,112 @@ export default function LoginScreen({ navigation }: AppNavigationOnlyProps<'Logi
   };
 
   return (
-    <View style={[styles.background, { backgroundColor: '#073b5b' }]}>
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingVertical: 36 }}>
-        <View style={{ alignItems: 'center', marginBottom: 36, paddingHorizontal: 24 }}>
-          <View
-            style={{
-              width: 92,
-              height: 92,
-              borderRadius: 46,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(255,255,255,0.14)',
-              marginBottom: 14,
-            }}>
-            <Image
-              source={require('../../../assets/images/icon.png')}
-              style={{ height: 60, width: 60 }}
-              resizeMode="contain"
-            />
-          </View>
-          <Text
-            style={{ fontWeight: 'bold', fontSize: 32, textAlign: 'center', color: '#f8fbff' }}>
-            Chào mừng trở lại
-          </Text>
-          <Text
-            style={{
-              marginTop: 6,
-              textAlign: 'center',
-              color: '#d3e7f2',
-              fontSize: 17,
-              lineHeight: 24,
-              maxWidth: 320,
-            }}>
-            Đăng nhập để tiếp tục hành trình, xem địa điểm đã lưu và quản lý hoạt động của bạn.
-          </Text>
-        </View>
-
-        <View
-          style={[
-            styles.container,
-            {
-              backgroundColor: 'rgba(255,255,255,0.08)',
-              borderRadius: 28,
-              paddingVertical: 16,
-              marginHorizontal: 12,
-            },
-          ]}>
-          <View style={[styles.inputContainer, { marginBottom: 20 }]}>
-            <Image
-              source={require('../../../assets/images/email-icon.png')}
-              style={{ width: 20, height: 20, marginRight: 10 }}
-            />
-            <TextInput
-              placeholder="Địa chỉ email"
-              style={{ flex: 1 }}
-              placeholderTextColor="#94a3b8"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Image
-              source={require('../../../assets/images/password-icon.png')}
-              style={{ width: 20, height: 20, marginRight: 20 }}
-            />
-            <TextInput
-              placeholder="Mật khẩu"
-              secureTextEntry={!isPasswordVisible}
-              style={{ flex: 1 }}
-              autoCapitalize="none"
-              placeholderTextColor="#94a3b8"
-              value={password}
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity onPress={() => setPasswordVisible(!isPasswordVisible)}>
+    <SafeAreaView style={authStyles.safeScreen}>
+      <KeyboardAvoidingView
+        style={authStyles.keyboard}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerStyle={authStyles.centeredScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          <View style={authStyles.heroHeader}>
+            <View style={authStyles.heroBadge}>
               <Image
-                source={
-                  isPasswordVisible
-                    ? require('../../../assets/images/hidden_eyepassword-icon.png')
-                    : require('../../../assets/images/eyepassword-icon.png')
-                }
-                style={{ width: 20, height: 20, marginRight: 20 }}
+                source={require('../../../assets/images/login.png')}
+                style={authStyles.heroBadgeImage}
+                resizeMode="cover"
               />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={[styles.containerChild, { marginTop: 24, alignItems: 'center' }]}>
-          <Pressable style={styles.button} onPress={handleLogin} disabled={submitting}>
-            {submitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Đăng nhập</Text>
-            )}
-          </Pressable>
-        </View>
-
-        <View style={{ alignItems: 'center', marginTop: 14 }}>
-          <Text
-            style={[styles.linkText, { fontSize: 15 }]}
-            onPress={() => navigation.navigate('Forgot Password')}>
-            Quên mật khẩu?
-          </Text>
-        </View>
-
-        <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 20 }}>
-          <Text
-            style={[
-              styles.text,
-              { marginBottom: 16, color: '#d3e7f2', textAlign: 'center', maxWidth: 300 },
-            ]}>
-            Đăng nhập bằng email và mật khẩu để tiếp tục sử dụng đầy đủ các tính năng.
-          </Text>
-          <Text style={[styles.text, { marginTop: 24, color: '#d3e7f2', marginBottom: 40 }]}>
-            Chưa có tài khoản?{' '}
-            <Text style={styles.linkText} onPress={() => navigation.navigate('Register')}>
-              Đăng ký
+            </View>
+            <Text style={[authStyles.centeredTitle, authStyles.titleAccent]}>
+              Chào mừng trở lại
             </Text>
-          </Text>
-        </View>
-      </ScrollView>
-    </View>
+            <Text style={authStyles.centeredSubtitle}>
+              Đăng nhập để tiếp tục hành trình, xem địa điểm đã lưu và quản lý hoạt động của bạn.
+            </Text>
+          </View>
+
+          <View style={authStyles.formShell}>
+            <View style={[authStyles.inputRow, { marginBottom: 10 }]}>
+              <Image
+                source={require('../../../assets/images/email-icon.png')}
+                style={[authStyles.inputIcon, { marginRight: 12 }]}
+              />
+              <TextInput
+                placeholder="Địa chỉ email"
+                style={authStyles.inputText}
+                placeholderTextColor={colors.authBody}
+                selectionColor={colors.authTitleAccent}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={authStyles.inputRow}>
+              <Image
+                source={require('../../../assets/images/password-icon.png')}
+                style={[authStyles.inputIcon, { marginRight: 16 }]}
+              />
+              <TextInput
+                placeholder="Mật khẩu"
+                secureTextEntry={!isPasswordVisible}
+                style={authStyles.inputText}
+                autoCapitalize="none"
+                placeholderTextColor={colors.authBody}
+                selectionColor={colors.authTitleAccent}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setPasswordVisible(!isPasswordVisible)}>
+                <Image
+                  source={
+                    isPasswordVisible
+                      ? require('../../../assets/images/hidden_eyepassword-icon.png')
+                      : require('../../../assets/images/eyepassword-icon.png')
+                  }
+                  style={[authStyles.inputIcon, { marginLeft: 12 }]}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={authStyles.primaryActionWrap}>
+            <Pressable
+              style={({ pressed }) => [
+                authStyles.button,
+                pressed && !submitting ? authStyles.buttonPressed : undefined,
+                submitting ? authStyles.buttonDisabled : undefined,
+              ]}
+              onPress={handleLogin}
+              disabled={submitting}>
+              {submitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={authStyles.buttonText}>Đăng nhập</Text>
+              )}
+            </Pressable>
+          </View>
+
+          <View style={{ alignItems: 'center', marginTop: 14 }}>
+            <Text style={authStyles.link} onPress={() => navigation.navigate('Forgot Password')}>
+              Quên mật khẩu?
+            </Text>
+          </View>
+
+          <View style={{ alignItems: 'center', marginTop: 20 }}>
+            <Text style={authStyles.helperText}>
+              Đăng nhập bằng email và mật khẩu để tiếp tục sử dụng đầy đủ các tính năng.
+            </Text>
+            <Text style={[authStyles.footerText, { marginBottom: 16 }]}>
+              Chưa có tài khoản?{' '}
+              <Text style={authStyles.inlineLink} onPress={() => navigation.navigate('Register')}>
+                Đăng ký
+              </Text>
+            </Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

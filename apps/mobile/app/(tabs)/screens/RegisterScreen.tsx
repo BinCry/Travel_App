@@ -4,13 +4,17 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import styles from './RegisterScreen.styles';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { authStyles } from '../common/authTheme';
 import { colors } from '../common/colors';
 import { toUserMessage } from '../common/errorMessages';
 import { useAuth } from '../context/AuthContext';
@@ -56,12 +60,7 @@ export default function RegisterScreen({ navigation }: AppNavigationOnlyProps<'R
 
     setSubmitting(true);
     try {
-      const result = await register(
-        email.trim(),
-        password,
-        fullName.trim() || undefined,
-        role
-      );
+      const result = await register(email.trim(), password, fullName.trim() || undefined, role);
       Alert.alert('Kiểm tra email', result.message, [
         {
           text: 'Nhập OTP',
@@ -76,227 +75,195 @@ export default function RegisterScreen({ navigation }: AppNavigationOnlyProps<'R
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', marginTop: 40, backgroundColor: '#FFFFFF' }}>
-      <View style={styles.container}>
-        <View style={{ flexDirection: 'column', alignItems: 'center' }}>
-          <View style={styles.imageFrame}>
-            <View
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: colors.primaryLight,
-              }}>
+    <SafeAreaView style={authStyles.safeScreen}>
+      <KeyboardAvoidingView
+        style={authStyles.keyboard}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerStyle={authStyles.topScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          <View style={authStyles.stackCard}>
+            <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+              <View style={authStyles.heroFrame}>
+                <View style={authStyles.heroFrameInner}>
+                  <Image
+                    source={require('../../../assets/images/register.png')}
+                    style={authStyles.heroFrameImage}
+                    resizeMode="cover"
+                  />
+                </View>
+              </View>
+              <Text
+                style={[authStyles.centeredTitle, authStyles.titleAccent, { marginTop: 14 }]}>
+                Bắt đầu hành trình
+              </Text>
+              <Text style={authStyles.centeredSubtitle}>
+                Tạo tài khoản để khám phá nhiều địa điểm và nhận gợi ý phù hợp với bạn.
+              </Text>
+            </View>
+
+            <View style={[authStyles.inputRow, { marginTop: 20 }]}>
               <Image
-                source={require('../../../assets/images/icon.png')}
-                style={{ width: 112, height: 112 }}
-                resizeMode="contain"
+                source={require('../../../assets/images/user-icon.png')}
+                style={[authStyles.inputIcon, { marginRight: 12 }]}
+              />
+              <TextInput
+                placeholder="Họ và tên"
+                style={authStyles.inputText}
+                placeholderTextColor={colors.authBody}
+                selectionColor={colors.authTitleAccent}
+                value={fullName}
+                onChangeText={setFullName}
               />
             </View>
-          </View>
-          <Text style={{ fontWeight: 'bold', fontSize: 34, textAlign: 'center', marginTop: 12 }}>
-            Bắt đầu hành trình
-          </Text>
-          <Text
-            style={[
-              styles.text,
-              {
-                marginTop: 8,
-                textAlign: 'center',
-                maxWidth: 310,
-                lineHeight: 22,
-              },
-            ]}>
-            Tạo tài khoản để khám phá nhiều địa điểm và nhận gợi ý phù hợp với bạn.
-          </Text>
-        </View>
 
-        <View style={[styles.inputContainer, { marginTop: 20 }]}>
-          <Image
-            source={require('../../../assets/images/user-icon.png')}
-            style={{ width: 20, height: 20, marginRight: 6 }}
-          />
-          <TextInput
-            placeholder="Họ và tên"
-            style={{ flex: 1 }}
-            value={fullName}
-            onChangeText={setFullName}
-          />
-        </View>
+            <View style={authStyles.inputRow}>
+              <Image
+                source={require('../../../assets/images/email-icon.png')}
+                style={[authStyles.inputIcon, { marginRight: 12 }]}
+              />
+              <TextInput
+                placeholder="Địa chỉ email"
+                style={authStyles.inputText}
+                placeholderTextColor={colors.authBody}
+                selectionColor={colors.authTitleAccent}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
 
-        <View style={styles.inputContainer}>
-          <Image
-            source={require('../../../assets/images/email-icon.png')}
-            style={{ width: 20, height: 20, marginRight: 6 }}
-          />
-          <TextInput
-            placeholder="Địa chỉ email"
-            style={{ flex: 1 }}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
+            <View style={authStyles.inputRow}>
+              <Image
+                source={require('../../../assets/images/password-icon.png')}
+                style={[authStyles.inputIcon, { marginRight: 12 }]}
+              />
+              <TextInput
+                placeholder="Mật khẩu"
+                secureTextEntry={!isPasswordVisible}
+                style={authStyles.inputText}
+                autoCorrect={false}
+                autoCapitalize="none"
+                placeholderTextColor={colors.authBody}
+                selectionColor={colors.authTitleAccent}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setPasswordVisible(!isPasswordVisible)}>
+                <Image
+                  source={
+                    isPasswordVisible
+                      ? require('../../../assets/images/hidden_eyepassword-icon.png')
+                      : require('../../../assets/images/eyepassword-icon.png')
+                  }
+                  style={[authStyles.inputIcon, { marginLeft: 12 }]}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </View>
 
-        <View style={styles.inputContainer}>
-          <Image
-            source={require('../../../assets/images/password-icon.png')}
-            style={{ width: 20, height: 20, marginRight: 6 }}
-          />
-          <TextInput
-            placeholder="Mật khẩu"
-            secureTextEntry={!isPasswordVisible}
-            style={{ flex: 1 }}
-            autoCorrect={false}
-            autoCapitalize="none"
-            value={password}
-            onChangeText={setPassword}
-          />
-          <TouchableOpacity onPress={() => setPasswordVisible(!isPasswordVisible)}>
-            <Image
-              source={
-                isPasswordVisible
-                  ? require('../../../assets/images/hidden_eyepassword-icon.png')
-                  : require('../../../assets/images/eyepassword-icon.png')
-              }
-              style={{ width: 20, height: 20 }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        </View>
+            <View style={authStyles.inputRow}>
+              <Image
+                source={require('../../../assets/images/cfpassword-icon.png')}
+                style={[authStyles.inputIcon, { marginRight: 12 }]}
+              />
+              <TextInput
+                placeholder="Xác nhận mật khẩu"
+                secureTextEntry={!isCfPasswordVisible}
+                style={authStyles.inputText}
+                placeholderTextColor={colors.authBody}
+                selectionColor={colors.authTitleAccent}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
+              <TouchableOpacity onPress={() => setCfPasswordVisible(!isCfPasswordVisible)}>
+                <Image
+                  source={
+                    isCfPasswordVisible
+                      ? require('../../../assets/images/hidden_eyepassword-icon.png')
+                      : require('../../../assets/images/eyepassword-icon.png')
+                  }
+                  style={[authStyles.inputIcon, { marginLeft: 12 }]}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </View>
 
-        <View style={styles.inputContainer}>
-          <Image
-            source={require('../../../assets/images/cfpassword-icon.png')}
-            style={{ width: 20, height: 20, marginRight: 6 }}
-          />
-          <TextInput
-            placeholder="Xác nhận mật khẩu"
-            secureTextEntry={!isCfPasswordVisible}
-            style={{ flex: 1 }}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-          />
-          <TouchableOpacity onPress={() => setCfPasswordVisible(!isCfPasswordVisible)}>
-            <Image
-              source={
-                isCfPasswordVisible
-                  ? require('../../../assets/images/hidden_eyepassword-icon.png')
-                  : require('../../../assets/images/eyepassword-icon.png')
-              }
-              style={{ width: 20, height: 20 }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        </View>
+            <View style={{ marginTop: 12 }}>
+              <Text style={authStyles.sectionLabel}>Loại tài khoản</Text>
+              <View style={authStyles.roleRow}>
+                <Pressable
+                  onPress={() => setRole('traveler')}
+                  style={[
+                    authStyles.roleCard,
+                    role === 'traveler' ? authStyles.roleCardActive : undefined,
+                  ]}>
+                  <Text style={authStyles.roleTitle}>Khách du lịch</Text>
+                  <Text style={authStyles.roleDescription}>
+                    Khám phá, lưu địa điểm và viết đánh giá
+                  </Text>
+                </Pressable>
 
-        <View style={{ marginTop: 8 }}>
-          <Text style={[styles.text, { marginBottom: 10, color: colors.textSecondary }]}>
-            Loại tài khoản
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Pressable
-              onPress={() => setRole('traveler')}
-              style={{
-                flex: 1,
-                borderRadius: 16,
-                borderWidth: 1.5,
-                borderColor: role === 'traveler' ? colors.primary : colors.border,
-                backgroundColor: role === 'traveler' ? '#eaf8fe' : '#fff',
-                paddingVertical: 14,
-                paddingHorizontal: 14,
-              }}>
-              <Text
-                style={{
-                  color: colors.textPrimary,
-                  fontWeight: '700',
-                  textAlign: 'center',
-                }}>
-                Khách du lịch
+                <Pressable
+                  onPress={() => setRole('owner')}
+                  style={[
+                    authStyles.roleCard,
+                    role === 'owner' ? authStyles.roleCardActive : undefined,
+                  ]}>
+                  <Text style={authStyles.roleTitle}>Chủ địa điểm</Text>
+                  <Text style={authStyles.roleDescription}>
+                    Quản lý địa điểm và ưu đãi của bạn
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={authStyles.checkboxRow}>
+              <Checkbox
+                style={authStyles.checkbox}
+                value={isChecked}
+                onValueChange={setChecked}
+                color={isChecked ? colors.authPrimaryButton : undefined}
+              />
+              <Text style={authStyles.checkboxText}>
+                Tôi đồng ý với{' '}
+                <Text style={authStyles.inlineLink} onPress={() => navigation.navigate('Terms')}>
+                  Điều khoản sử dụng
+                </Text>
               </Text>
-              <Text
-                style={{
-                  marginTop: 6,
-                  color: colors.textSecondary,
-                  fontSize: 12,
-                  lineHeight: 18,
-                  textAlign: 'center',
-                }}>
-                Khám phá, lưu địa điểm và viết đánh giá
-              </Text>
-            </Pressable>
+            </View>
 
-            <Pressable
-              onPress={() => setRole('owner')}
-              style={{
-                flex: 1,
-                borderRadius: 16,
-                borderWidth: 1.5,
-                borderColor: role === 'owner' ? colors.primary : colors.border,
-                backgroundColor: role === 'owner' ? '#eaf8fe' : '#fff',
-                paddingVertical: 14,
-                paddingHorizontal: 14,
-              }}>
-              <Text
-                style={{
-                  color: colors.textPrimary,
-                  fontWeight: '700',
-                  textAlign: 'center',
-                }}>
-                Chủ địa điểm
-              </Text>
-              <Text
-                style={{
-                  marginTop: 6,
-                  color: colors.textSecondary,
-                  fontSize: 12,
-                  lineHeight: 18,
-                  textAlign: 'center',
-                }}>
-                Quản lý địa điểm và ưu đãi của bạn
-              </Text>
-            </Pressable>
-          </View>
-        </View>
+            <View style={authStyles.primaryActionWrap}>
+              <Pressable
+                style={({ pressed }) => [
+                  authStyles.button,
+                  pressed && !submitting ? authStyles.buttonPressed : undefined,
+                  submitting ? authStyles.buttonDisabled : undefined,
+                ]}
+                onPress={handleRegister}
+                disabled={submitting}>
+                {submitting ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={authStyles.buttonText}>Tạo tài khoản</Text>
+                )}
+              </Pressable>
+            </View>
 
-        <View style={{ flexDirection: 'row', marginLeft: 10, marginTop: 10, paddingRight: 16 }}>
-          <Checkbox
-            style={styles.checkbox}
-            value={isChecked}
-            onValueChange={setChecked}
-            color={isChecked ? colors.primary : undefined}
-          />
-          <Text style={{ flex: 1, lineHeight: 20 }}>
-            Tôi đồng ý với{' '}
-            <Text style={styles.linkText} onPress={() => navigation.navigate('Terms')}>
-              Điều khoản sử dụng
+            <Text style={authStyles.noteText}>
+              Sau khi đăng ký, bạn cần nhập OTP xác minh email để kích hoạt tài khoản.
             </Text>
-          </Text>
-        </View>
-
-        <View style={{ marginTop: 12, alignItems: 'center' }}>
-          <Pressable style={styles.button} onPress={handleRegister} disabled={submitting}>
-            {submitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Tạo tài khoản</Text>
-            )}
-          </Pressable>
-        </View>
-
-        <View style={{ flexDirection: 'column', alignItems: 'center' }}>
-          <Text style={[styles.text, { marginVertical: 16, textAlign: 'center' }]}>
-            Sau khi đăng ký, bạn cần nhập OTP xác minh email để kích hoạt tài khoản.
-          </Text>
-          <Text style={[styles.text, { marginVertical: 10 }]}>
-            Đã có tài khoản?{' '}
-            <Text style={styles.linkText} onPress={() => navigation.navigate('Login')}>
-              Đăng nhập
+            <Text style={[authStyles.footerText, { marginBottom: 8 }]}>
+              Đã có tài khoản?{' '}
+              <Text style={authStyles.inlineLink} onPress={() => navigation.navigate('Login')}>
+                Đăng nhập
+              </Text>
             </Text>
-          </Text>
-        </View>
-      </View>
-    </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

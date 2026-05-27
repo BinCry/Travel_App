@@ -2,14 +2,17 @@ import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
-  SafeAreaView,
-  StyleSheet,
+  ScrollView,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { forgotPassword, resetPassword, verifyForgotPasswordOtp } from '../../../lib/api/auth';
+import { authStyles } from '../common/authTheme';
 import { colors } from '../common/colors';
 import { getApiErrorMessage } from '../context/AuthContext';
 import type { AppNavigationOnlyProps } from '../types/navigation';
@@ -118,158 +121,112 @@ export default function ForgotPasswordScreen({
   };
 
   return (
-    <SafeAreaView style={styles.background}>
-      <View style={styles.card}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{description}</Text>
+    <SafeAreaView style={authStyles.safeScreen}>
+      <KeyboardAvoidingView
+        style={authStyles.keyboard}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerStyle={authStyles.centeredScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          <View style={authStyles.cardSurface}>
+            <Text style={[authStyles.cardTitle, authStyles.titleAccent]}>{title}</Text>
+            <Text style={authStyles.cardSubtitle}>{description}</Text>
 
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="email@cuaban.com"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          editable={step === 'request'}
-        />
-
-        {step !== 'request' ? (
-          <>
-            <Text style={styles.label}>OTP</Text>
+            <Text style={authStyles.fieldLabel}>Email</Text>
             <TextInput
-              style={styles.input}
-              value={otp}
-              onChangeText={setOtp}
-          placeholder="Mã OTP gồm 6 số"
-              keyboardType="number-pad"
-              maxLength={6}
-              editable={step !== 'reset'}
+              style={authStyles.textInput}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="emailcuaban@gmail.com"
+              placeholderTextColor={colors.authBody}
+              selectionColor={colors.authTitleAccent}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              editable={step === 'request'}
             />
-          </>
-        ) : null}
 
-        {step === 'reset' ? (
-          <>
-            <Text style={styles.label}>Mật khẩu mới</Text>
-            <TextInput
-              style={styles.input}
-              value={newPassword}
-              onChangeText={setNewPassword}
-              secureTextEntry
-              placeholder="Mật khẩu mới"
-            />
-            <Text style={styles.label}>Xác nhận mật khẩu</Text>
-            <TextInput
-              style={styles.input}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              placeholder="Xác nhận mật khẩu"
-            />
-          </>
-        ) : null}
+            {step !== 'request' ? (
+              <>
+                <Text style={authStyles.fieldLabel}>OTP</Text>
+                <TextInput
+                  style={authStyles.textInput}
+                  value={otp}
+                  onChangeText={setOtp}
+                  placeholder="Mã OTP gồm 6 số"
+                  placeholderTextColor={colors.authBody}
+                  selectionColor={colors.authTitleAccent}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  editable={step !== 'reset'}
+                />
+              </>
+            ) : null}
 
-        <Pressable
-          style={styles.button}
-          disabled={submitting}
-          onPress={
-            step === 'request'
-              ? handleRequestOtp
-              : step === 'verify'
-                ? handleVerifyOtp
-                : handleResetPassword
-          }>
-          {submitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>
-              {step === 'request'
-                ? 'Gửi OTP'
-                : step === 'verify'
-                  ? 'Xác thực OTP'
-                  : 'Đặt lại mật khẩu'}
-            </Text>
-          )}
-        </Pressable>
+            {step === 'reset' ? (
+              <>
+                <Text style={authStyles.fieldLabel}>Mật khẩu mới</Text>
+                <TextInput
+                  style={authStyles.textInput}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  secureTextEntry
+                  placeholder="Mật khẩu mới"
+                  placeholderTextColor={colors.authBody}
+                  selectionColor={colors.authTitleAccent}
+                />
+                <Text style={authStyles.fieldLabel}>Xác nhận mật khẩu</Text>
+                <TextInput
+                  style={authStyles.textInput}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry
+                  placeholder="Xác nhận mật khẩu"
+                  placeholderTextColor={colors.authBody}
+                  selectionColor={colors.authTitleAccent}
+                />
+              </>
+            ) : null}
 
-        {step !== 'request' ? (
-          <Pressable disabled={submitting} onPress={handleRequestOtp}>
-            <Text style={styles.link}>Gửi lại OTP</Text>
-          </Pressable>
-        ) : null}
+            <Pressable
+              style={({ pressed }) => [
+                authStyles.button,
+                pressed && !submitting ? authStyles.buttonPressed : undefined,
+                submitting ? authStyles.buttonDisabled : undefined,
+              ]}
+              disabled={submitting}
+              onPress={
+                step === 'request'
+                  ? handleRequestOtp
+                  : step === 'verify'
+                    ? handleVerifyOtp
+                    : handleResetPassword
+              }>
+              {submitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={authStyles.buttonText}>
+                  {step === 'request'
+                    ? 'Gửi OTP'
+                    : step === 'verify'
+                      ? 'Xác thực OTP'
+                      : 'Đặt lại mật khẩu'}
+                </Text>
+              )}
+            </Pressable>
 
-        <Pressable disabled={submitting} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.secondaryLink}>Quay lại đăng nhập</Text>
-        </Pressable>
-      </View>
+            {step !== 'request' ? (
+              <Pressable disabled={submitting} onPress={handleRequestOtp}>
+                <Text style={authStyles.link}>Gửi lại OTP</Text>
+              </Pressable>
+            ) : null}
+
+            <Pressable disabled={submitting} onPress={() => navigation.navigate('Login')}>
+              <Text style={authStyles.secondaryLink}>Quay lại đăng nhập</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: colors.shadow,
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  subtitle: {
-    marginTop: 8,
-    marginBottom: 20,
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
-  label: {
-    marginBottom: 8,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 14,
-    backgroundColor: '#fff',
-  },
-  button: {
-    marginTop: 10,
-    borderRadius: 14,
-    backgroundColor: colors.primary,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  link: {
-    marginTop: 16,
-    textAlign: 'center',
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  secondaryLink: {
-    marginTop: 10,
-    textAlign: 'center',
-    color: colors.textSecondary,
-  },
-});
