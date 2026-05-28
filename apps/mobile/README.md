@@ -23,14 +23,14 @@ npm --prefix apps/mobile run start
 Ứng dụng đọc API từ:
 
 ```env
-EXPO_PUBLIC_API_BASE_URL=https://your-api-domain.example.com
+EXPO_PUBLIC_API_BASE_URL=auto
 ```
 
 Ví dụ:
 
+- Expo LAN trên máy thật cùng mạng: `auto` (khuyến nghị) hoặc `http://<your-lan-ip>:8000`
 - Android emulator: `http://10.0.2.2:8000`
 - iOS simulator: `http://localhost:8000`
-- máy thật cùng mạng LAN: `http://<your-lan-ip>:8000`
 - Azure VPS / Coolify: `https://your-api-domain.example.com`
 
 ## Kiểm tra chất lượng
@@ -87,5 +87,6 @@ maestro test apps/mobile/.maestro/traveler-smoke.yaml
 ## Lưu ý phát hành
 
 - sau khi đăng ký, người dùng phải xác minh email trước khi đăng nhập
-- mobile cần `EXPO_PUBLIC_API_BASE_URL` trỏ tới domain HTTPS public của backend
+- local Expo LAN có thể dùng `EXPO_PUBLIC_API_BASE_URL=auto` để bám theo IP hiện tại của máy dev
+- preview/production build vẫn cần `EXPO_PUBLIC_API_BASE_URL` trỏ tới domain HTTPS public của backend
 - `android.package` hiện dùng cho APK nội bộ, cần đổi trước khi lên Google Play thật

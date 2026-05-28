@@ -13,6 +13,7 @@ import {
 import { updateMe } from '../../../lib/api/users';
 import { uploadAvatar } from '../../../lib/api/uploads';
 import UserAvatar from '../components/UserAvatar';
+import { PROFILE_AVATAR_INNER_SIZE } from '../common/profileAvatar';
 import styles from './EditProfileScreen.styles';
 import { useAuth, getApiErrorMessage } from '../context/AuthContext';
 import type { AppNavigationOnlyProps } from '../types/navigation';
@@ -97,7 +98,11 @@ export default function EditProfileScreen({ navigation }: AppNavigationOnlyProps
         <View style={{ alignItems: 'center' }}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatarBorder}>
-              <UserAvatar uri={avatarUri || null} size={118} borderWidth={0} />
+              <UserAvatar
+                uri={avatarUri || null}
+                size={PROFILE_AVATAR_INNER_SIZE}
+                borderWidth={0}
+              />
             </View>
 
             <TouchableOpacity style={styles.iconContainer} onPress={handlePickAvatar}>

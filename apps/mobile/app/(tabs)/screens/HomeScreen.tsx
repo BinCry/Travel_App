@@ -5,6 +5,7 @@ import {
   Alert,
   FlatList,
   Image,
+  type ImageSourcePropType,
   Pressable,
   Text,
   TextInput,
@@ -19,6 +20,32 @@ import type { AppNavigationOnlyProps, AppNavigationProp } from '../types/navigat
 import styles from './HomeScreen.styles';
 
 type Place = PlaceListItem;
+
+const CATEGORY_OPTIONS: {
+  value: PlaceCategory;
+  label: string;
+  icon: ImageSourcePropType;
+  flex: number;
+}[] = [
+  {
+    value: 'attractions',
+    label: 'Điểm đến',
+    icon: require('../../../assets/images/camera-icon.png'),
+    flex: 1.08,
+  },
+  {
+    value: 'dining',
+    label: 'Ẩm thực',
+    icon: require('../../../assets/images/dining-icon.png'),
+    flex: 1.04,
+  },
+  {
+    value: 'festivals',
+    label: 'Lễ hội',
+    icon: require('../../../assets/images/festival-icon.png'),
+    flex: 0.88,
+  },
+];
 
 function renderPlaceCard(item: Place, navigation: AppNavigationProp<'Home'>) {
   return (
@@ -173,7 +200,7 @@ export default function HomeScreen({ navigation }: AppNavigationOnlyProps<'Home'
   }, [loadError, loadPlaces]);
 
   const renderHeader = () => (
-    <View style={styles.container}>
+    <View style={[styles.container, styles.headerSection]}>
       <View style={{ flexDirection: 'column' }}>
         <Text style={{ color: colors.textSecondary }}>Khu vực gợi ý</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -193,101 +220,53 @@ export default function HomeScreen({ navigation }: AppNavigationOnlyProps<'Home'
         </View>
       </View>
 
-      <View style={{ flexDirection: 'row', columnGap: 10, marginHorizontal: 5 }}>
-        <Pressable
-          style={[
-            styles.button,
-            {
-              flex: 1,
-              height: 50,
-              padding: 10,
-              backgroundColor:
-                activeCategory === 'attractions' ? colors.primary : colors.primaryLight,
-            },
-          ]}
-          onPress={() => setActiveCategory('attractions')}>
-          <View style={styles.containerCategoryButton}>
-            <Image
-              source={require('../../../assets/images/camera-icon.png')}
-              style={{ width: 25, height: 25, marginRight: 2 }}
-            />
-            <Text style={[styles.categoryButtonText, { color: 'black', fontSize: 15 }]}>
-              Điểm đến
-            </Text>
-          </View>
-        </Pressable>
-
-        <Pressable
-          style={[
-            styles.button,
-            {
-              flex: 1,
-              height: 50,
-              backgroundColor: activeCategory === 'dining' ? colors.primary : colors.primaryLight,
-            },
-          ]}
-          onPress={() => setActiveCategory('dining')}>
-          <View style={styles.containerCategoryButton}>
-            <Image
-              source={require('../../../assets/images/dining-icon.png')}
-              style={{ width: 25, height: 25, marginRight: 2 }}
-            />
-            <Text style={[styles.categoryButtonText, { color: 'black', fontSize: 15 }]}>
-              Ẩm thực
-            </Text>
-          </View>
-        </Pressable>
-
-        <Pressable
-          style={[
-            styles.button,
-            {
-              flex: 1,
-              height: 50,
-              backgroundColor:
-                activeCategory === 'festivals' ? colors.primary : colors.primaryLight,
-            },
-          ]}
-          onPress={() => setActiveCategory('festivals')}>
-          <View style={styles.containerCategoryButton}>
-            <Image
-              source={require('../../../assets/images/festival-icon.png')}
-              style={{ width: 25, height: 25, marginRight: 2 }}
-            />
-            <Text style={[styles.categoryButtonText, { color: 'black', fontSize: 15 }]}>
-              Lễ hội
-            </Text>
-          </View>
-        </Pressable>
+      <View style={styles.categoryRow}>
+        {CATEGORY_OPTIONS.map((option) => (
+          <Pressable
+            key={option.value}
+            style={[
+              styles.categoryButton,
+              { flex: option.flex },
+              activeCategory === option.value ? styles.categoryButtonActive : undefined,
+            ]}
+            onPress={() => setActiveCategory(option.value)}>
+            <View style={styles.containerCategoryButton}>
+              <View style={styles.categoryIconSlot}>
+                <Image source={option.icon} style={styles.categoryIconImage} resizeMode="contain" />
+              </View>
+              <Text
+                style={styles.categoryButtonText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.95}>
+                {option.label}
+              </Text>
+            </View>
+          </Pressable>
+        ))}
       </View>
 
       <View style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'center' }}>
         <Pressable
-          style={{
-            flex: 1,
-            borderRadius: 8,
-            borderWidth: 2,
-            borderColor: colors.primary,
-            padding: 10,
-          }}
+          style={[styles.aiCard, { flex: 1 }]}
           onPress={handlePlanWithAi}
           disabled={aiLoading}>
-          <View style={[styles.containerCategoryButton, { height: 40 }]}>
+          <View style={styles.aiCardContent}>
             <Image
               source={require('../../../assets/images/AIPlan-icon.png')}
-              style={{ width: 25, height: 25, marginRight: 2 }}
+              style={styles.aiCardIcon}
             />
-            <View style={{ flexDirection: 'column', flex: 1 }}>
-              <Text style={[styles.categoryButtonText, { flex: 1, fontSize: 15 }]} numberOfLines={1}>
+            <View style={styles.aiCardTextBlock}>
+              <Text style={styles.aiCardTitle} numberOfLines={1}>
                 {aiLoading ? 'Đang tạo gợi ý...' : 'Lên kế hoạch với AI'}
               </Text>
-              <Text style={[styles.linkText, { fontSize: 12, color: 'gray' }]} numberOfLines={2}>
+              <Text style={styles.aiCardSubtitle} numberOfLines={2}>
                 Nhận gợi ý hành trình phù hợp với nhu cầu của bạn
               </Text>
             </View>
             <Image
               source={require('../../../assets/images/right-arrow-icon.png')}
-              style={{ width: 25, height: 25, marginRight: 2, tintColor: colors.primary }}
+              style={styles.aiCardArrow}
             />
           </View>
         </Pressable>
@@ -319,6 +298,7 @@ export default function HomeScreen({ navigation }: AppNavigationOnlyProps<'Home'
           renderItem={renderPlaceItem}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={renderHeader}
+          contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshing={loading}
           onRefresh={loadPlaces}

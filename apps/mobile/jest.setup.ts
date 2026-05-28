@@ -8,6 +8,7 @@ jest.mock("@expo/vector-icons", () => {
   const React = require("react");
   return {
     Ionicons: (props: Record<string, unknown>) => React.createElement("Icon", props),
+    MaterialIcons: (props: Record<string, unknown>) => React.createElement("Icon", props),
   };
 });
 

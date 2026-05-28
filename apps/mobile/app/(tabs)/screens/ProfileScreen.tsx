@@ -1,9 +1,11 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import UserAvatar from '../components/UserAvatar';
 import styles from './ProfileScreen.styles';
 import { useAuth } from '../context/AuthContext';
+import { PROFILE_AVATAR_INNER_SIZE } from '../common/profileAvatar';
 import type { AppNavigationOnlyProps } from '../types/navigation';
 
 export default function ProfileScreen({ navigation }: AppNavigationOnlyProps<'Profile'>) {
@@ -11,12 +13,15 @@ export default function ProfileScreen({ navigation }: AppNavigationOnlyProps<'Pr
   const displayName = user?.fullName || user?.name || 'Người dùng';
 
   return (
-    <View style={{ flex: 1, marginTop: 40, backgroundColor: '#ffff' }}>
-      <View style={[styles.container, { marginTop: 20 }]}>
-        <View style={{ alignItems: 'center' }}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <ScrollView
+        testID="profile-scroll-view"
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.headerSection}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatarBorder}>
-              <UserAvatar uri={user?.avatarUrl} size={118} borderWidth={0} />
+              <UserAvatar uri={user?.avatarUrl} size={PROFILE_AVATAR_INNER_SIZE} borderWidth={0} />
             </View>
 
             <TouchableOpacity
@@ -131,7 +136,7 @@ export default function ProfileScreen({ navigation }: AppNavigationOnlyProps<'Pr
             <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
           </TouchableOpacity>
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

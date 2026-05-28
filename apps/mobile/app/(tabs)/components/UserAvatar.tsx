@@ -27,6 +27,7 @@ export default function UserAvatar({
   if (uri) {
     return (
       <Image
+        testID="user-avatar-image"
         source={{ uri }}
         style={[
           avatarSize,
@@ -42,6 +43,7 @@ export default function UserAvatar({
 
   return (
     <View
+      testID="user-avatar-fallback"
       style={[
         avatarSize,
         {
