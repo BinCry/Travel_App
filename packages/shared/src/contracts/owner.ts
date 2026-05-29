@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { placeCategorySchema } from "./places.js";
+import { placeUpdateSchema } from "./place-updates.js";
 
 export const promotionScheduleInputSchema = z.object({
   startDate: z.string().min(1),
@@ -68,6 +69,7 @@ export const ownerPlaceDetailSchema = ownerPlaceSchema.extend({
   latitude: z.number().nullable(),
   longitude: z.number().nullable(),
   promotions: z.array(promotionItemSchema),
+  updates: z.array(placeUpdateSchema),
 });
 
 export const ownerAnalyticsTopPlaceSchema = z.object({

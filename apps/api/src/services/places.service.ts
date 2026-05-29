@@ -8,6 +8,7 @@ import {
   type PlaceListItem,
   type PlaceReview,
 } from "@travel-app/shared/contracts/places";
+import { placeUpdateSchema } from "@travel-app/shared/contracts/place-updates";
 import type { OwnerReviewReply } from "@travel-app/shared/contracts/reviews";
 import { prisma } from "../database/client.js";
 import type { Pagination } from "../http/pagination.js";
@@ -40,6 +41,26 @@ function formatReviewDate(d: Date) {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+  });
+}
+
+function mapPlaceUpdate(update: {
+  id: string;
+  placeId: string;
+  title: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  owner: { fullName: string | null; username: string | null };
+}) {
+  return placeUpdateSchema.parse({
+    id: update.id,
+    placeId: update.placeId,
+    ownerName: update.owner.fullName || update.owner.username || "Chủ địa điểm",
+    title: update.title,
+    content: update.content,
+    createdAt: update.createdAt.toISOString(),
+    updatedAt: update.updatedAt.toISOString(),
   });
 }
 
@@ -81,6 +102,12 @@ export const placesService = {
           },
           orderBy: { createdAt: "desc" },
         },
+        updates: {
+          include: {
+            owner: { select: { fullName: true, username: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
       },
     });
     if (!place) return null;
@@ -90,7 +117,7 @@ export const placesService = {
       const ownerReply: OwnerReviewReply | null = r.reply
         ? {
             id: r.reply.id,
-            ownerName: r.reply.owner.fullName || r.reply.owner.username || "Chu dia diem",
+            ownerName: r.reply.owner.fullName || r.reply.owner.username || "Chủ địa điểm",
             content: r.reply.content,
             date: formatReviewDate(r.reply.createdAt),
           }
@@ -118,6 +145,7 @@ export const placesService = {
       about: place.about,
       priceLevel: place.priceLevel,
       reviews,
+      updates: place.updates.map(mapPlaceUpdate),
     });
   },
 };

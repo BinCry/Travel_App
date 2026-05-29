@@ -28,6 +28,9 @@ export type RootStackParamList = {
   "Manage Place": { placeId: string };
   "Manage Bookings": { placeId: string; placeName?: string };
   "Saved Places": undefined;
+  Collections: undefined | { placeId?: string; placeName?: string };
+  "Collection Detail": { collectionId: string };
+  Notifications: undefined;
   Trips: undefined;
   "Trip Planner": undefined | { tripId?: string };
   "AI Trip Builder": undefined | { initialQuery?: string; initialLocation?: string };

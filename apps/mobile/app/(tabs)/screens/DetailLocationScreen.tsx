@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { addFavorite, removeFavorite } from '../../../lib/api/favorites';
 import { fetchPlaceDetail } from '../../../lib/api/places';
 import type { PlaceDetail } from '../../../lib/api/types';
@@ -13,11 +14,17 @@ import { toUserMessage } from '../common/errorMessages';
 import type { AppScreenProps } from '../types/navigation';
 import styles from './DetailLocationScreen.styles';
 
+const REVIEW_PREVIEW_AVATAR_FRAME_SIZE = 60;
+const REVIEW_PREVIEW_AVATAR_BORDER_WIDTH = 2;
+const REVIEW_PREVIEW_AVATAR_INNER_SIZE =
+  REVIEW_PREVIEW_AVATAR_FRAME_SIZE - REVIEW_PREVIEW_AVATAR_BORDER_WIDTH * 2;
+
 export default function DetailLocationScreen({
   navigation,
   route,
 }: AppScreenProps<'Detail Location'>) {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const placeId = route.params?.placeId as string | undefined;
   const [place, setPlace] = useState<PlaceDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,13 +116,19 @@ export default function DetailLocationScreen({
   const firstReview = place.reviews[0];
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', backgroundColor: '#FFFFFF', marginVertical: 40 }}>
-      <ScrollView style={[styles.container, { margin: 0 }]}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <ScrollView
+        style={[styles.container, { margin: 0 }]}
+        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 20, 28) }}
+        scrollIndicatorInsets={{ bottom: Math.max(insets.bottom + 12, 20) }}
+        showsVerticalScrollIndicator={false}>
         <View style={{ margin: 0, position: 'relative' }}>
           <View style={[styles.imageFrame, { height: 350, borderRadius: 0, borderWidth: 0 }]}>
             <Image source={{ uri: place.imageUrl }} style={{ width: '100%', height: '100%' }} />
           </View>
-          <Pressable style={styles.roundButton} onPress={() => navigation.goBack()}>
+          <Pressable
+            style={[styles.roundButton, { top: insets.top + 12 }]}
+            onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={25} color="white" />
           </Pressable>
           <Pressable
@@ -124,7 +137,7 @@ export default function DetailLocationScreen({
               {
                 position: 'absolute',
                 right: 15,
-                top: 15,
+                top: insets.top + 12,
                 zIndex: 1,
                 backgroundColor: 'rgba(0,0,0,0.2)',
                 borderRadius: 20,
@@ -213,13 +226,78 @@ export default function DetailLocationScreen({
                     Đặt chỗ ngay trên app
                   </Text>
                   <Text style={{ marginTop: 6, color: colors.textSecondary, lineHeight: 21 }}>
-                    Chọn slot còn chỗ, gửi booking và theo dõi trạng thái xác nhận từ owner.
+                    Chọn slot còn chỗ, gửi booking và theo dõi trạng thái xác nhận từ chủ địa điểm.
                   </Text>
                 </View>
                 <Ionicons name="calendar-outline" size={28} color={colors.primary} />
               </Pressable>
             </View>
           ) : null}
+
+          {user ? (
+            <View style={{ marginHorizontal: 15, marginBottom: 10 }}>
+              <Pressable
+                onPress={() =>
+                  navigation.navigate('Collections', {
+                    placeId: place.id,
+                    placeName: place.name,
+                  })
+                }
+                style={{
+                  marginTop: 4,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: '#dbe7ef',
+                  backgroundColor: '#ffffff',
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 16,
+                }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 21, fontWeight: '700', color: colors.textPrimary }}>
+                    Lưu vào bộ sưu tập
+                  </Text>
+                  <Text style={{ marginTop: 6, color: colors.textSecondary, lineHeight: 21 }}>
+                    Gom địa điểm này vào bộ sưu tập, lịch trình hoặc danh sách gợi ý riêng của bạn.
+                  </Text>
+                </View>
+                <Ionicons name="folder-open-outline" size={28} color={colors.primary} />
+              </Pressable>
+            </View>
+          ) : null}
+
+          <View style={{ marginHorizontal: 15, marginTop: 12, marginBottom: 6 }}>
+            <Text style={{ fontSize: 25, fontWeight: '700', marginBottom: 8 }}>
+              Cập nhật từ địa điểm
+            </Text>
+            {place.updates.length ? (
+              place.updates.map((update) => (
+                <View
+                  key={update.id}
+                  style={{
+                    marginTop: 10,
+                    borderRadius: 18,
+                    borderWidth: 1,
+                    borderColor: '#dbe7ef',
+                    backgroundColor: '#f8fbfd',
+                    padding: 16,
+                    rowGap: 6,
+                  }}>
+                  <Text style={{ color: colors.primary, fontWeight: '700' }}>{update.title}</Text>
+                  <Text style={{ color: colors.textPrimary, lineHeight: 21 }}>{update.content}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                    {update.ownerName} • {new Date(update.createdAt).toLocaleDateString('vi-VN')}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text style={{ color: colors.textSecondary, lineHeight: 21 }}>
+                Chủ địa điểm chưa đăng cập nhật nào gần đây.
+              </Text>
+            )}
+          </View>
 
           {firstReview ? (
             <View style={{ flexDirection: 'column', margin: 15 }}>
@@ -246,8 +324,23 @@ export default function DetailLocationScreen({
                   { flexDirection: 'column', margin: 0, marginTop: 30, padding: 10, rowGap: 10 },
                 ]}>
                 <View style={{ flexDirection: 'row' }}>
-                  <View style={[styles.imageFrame, { width: 60, height: 60, borderRadius: 30, borderWidth: 0 }]}>
-                    <UserAvatar uri={firstReview.avatarUrl} size={60} borderWidth={0} />
+                  <View
+                    style={{
+                      width: REVIEW_PREVIEW_AVATAR_FRAME_SIZE,
+                      height: REVIEW_PREVIEW_AVATAR_FRAME_SIZE,
+                      borderRadius: REVIEW_PREVIEW_AVATAR_FRAME_SIZE / 2,
+                      borderWidth: REVIEW_PREVIEW_AVATAR_BORDER_WIDTH,
+                      borderColor: colors.primary,
+                      backgroundColor: colors.surface,
+                      overflow: 'hidden',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <UserAvatar
+                      uri={firstReview.avatarUrl}
+                      size={REVIEW_PREVIEW_AVATAR_INNER_SIZE}
+                      borderWidth={0}
+                    />
                   </View>
                   <View style={{ flexDirection: 'column', marginHorizontal: 10, justifyContent: 'center' }}>
                     <Text style={{ fontSize: 20, fontWeight: '700' }}>{firstReview.name}</Text>

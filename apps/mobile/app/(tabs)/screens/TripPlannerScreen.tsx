@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   createTrip,
   createTripStop,
@@ -27,6 +27,7 @@ import type {
   TripUpdateRequest,
 } from '../../../lib/api/types';
 import { colors } from '../common/colors';
+import { TOP_SAFE_AREA_EDGES, withBottomInset } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import type { AppScreenProps } from '../types/navigation';
 import styles from './TripPlannerScreen.styles';
@@ -133,6 +134,7 @@ export default function TripPlannerScreen({
   navigation,
   route,
 }: AppScreenProps<'Trip Planner'>) {
+  const insets = useSafeAreaInsets();
   const routeTripId = route.params?.tripId;
   const [tripId, setTripId] = useState(routeTripId);
   const [trip, setTrip] = useState<TripDetail | null>(null);
@@ -332,7 +334,7 @@ export default function TripPlannerScreen({
 
   if (loadError && tripId && !trip) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={TOP_SAFE_AREA_EDGES}>
         <View style={styles.container}>
           <View style={styles.content}>
             <View style={styles.errorCard}>
@@ -355,11 +357,14 @@ export default function TripPlannerScreen({
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={TOP_SAFE_AREA_EDGES}>
       <View style={styles.container}>
         <ScrollView
           testID="trip-planner-scroll"
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: withBottomInset(insets.bottom, 32) },
+          ]}
           showsVerticalScrollIndicator={false}>
           <View style={styles.heroCard}>
             <Text style={styles.heroTitle}>

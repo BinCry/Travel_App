@@ -9,10 +9,11 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deleteTrip, duplicateTrip, fetchTrips } from '../../../lib/api/trips';
 import type { TripBudget, TripListItem } from '../../../lib/api/types';
 import { colors } from '../common/colors';
+import { TOP_SAFE_AREA_EDGES, withBottomInset } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import type { AppNavigationOnlyProps } from '../types/navigation';
 import styles from './TripsScreen.styles';
@@ -35,6 +36,7 @@ function getBudgetLabel(value: TripBudget | null) {
 }
 
 export default function TripsScreen({ navigation }: AppNavigationOnlyProps<'Trips'>) {
+  const insets = useSafeAreaInsets();
   const [trips, setTrips] = useState<TripListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -112,7 +114,7 @@ export default function TripsScreen({ navigation }: AppNavigationOnlyProps<'Trip
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={TOP_SAFE_AREA_EDGES}>
       <View style={styles.container}>
         <FlatList
           testID="trips-list"
@@ -120,7 +122,10 @@ export default function TripsScreen({ navigation }: AppNavigationOnlyProps<'Trip
           keyExtractor={(item) => item.id}
           refreshing={loading}
           onRefresh={loadTrips}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: withBottomInset(insets.bottom, 28) },
+          ]}
           ListHeaderComponent={
             <View style={styles.heroCard}>
               <View style={styles.heroHeader}>

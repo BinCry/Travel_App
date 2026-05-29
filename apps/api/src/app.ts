@@ -12,6 +12,8 @@ import { ownerRouter } from "./routes/owner.routes.js";
 import { aiRouter } from "./routes/ai.routes.js";
 import { tripsRouter } from "./routes/trips.routes.js";
 import { bookingsRouter } from "./routes/bookings.routes.js";
+import { collectionsRouter } from "./routes/collections.routes.js";
+import { notificationsRouter } from "./routes/notifications.routes.js";
 import { httpErrorMiddleware } from "./http/errors.js";
 import { sendError } from "./http/responses.js";
 import { env } from "./config/env.js";
@@ -67,6 +69,8 @@ api.use("/owner", ownerRouter);
 api.use("/ai", aiRouter);
 api.use("/trips", tripsRouter);
 api.use("/bookings", bookingsRouter);
+api.use("/collections", collectionsRouter);
+api.use("/notifications", notificationsRouter);
 app.use("/api/v1", api);
 
 app.get("/health", async (_req, res) => {

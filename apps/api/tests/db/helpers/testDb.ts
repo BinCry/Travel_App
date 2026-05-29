@@ -14,12 +14,16 @@ const TRUNCATE_SQL = `
   TRUNCATE TABLE
     "EmailVerificationOtp",
     "PasswordResetOtp",
+    "Notification",
     "Promotion",
     "Booking",
     "AvailabilitySlot",
     "BookingOption",
     "TripStop",
     "Trip",
+    "CollectionPlace",
+    "Collection",
+    "PlaceUpdate",
     "ReviewReply",
     "Favorite",
     "ReviewLike",
@@ -93,6 +97,21 @@ type TripFixtureInput = {
   endDate?: Date | null;
   budget?: string | null;
   notes?: string | null;
+};
+
+type CollectionFixtureInput = {
+  id?: string;
+  userId: number;
+  title?: string;
+  isPublic?: boolean;
+};
+
+type PlaceUpdateFixtureInput = {
+  id?: string;
+  placeId: string;
+  ownerId: number;
+  title?: string;
+  content?: string;
 };
 
 type TripStopFixtureInput = {
@@ -227,12 +246,12 @@ export async function createTripFixture(input: TripFixtureInput) {
     data: {
       id: input.id ?? randomUUID(),
       userId: input.userId,
-      title: input.title ?? "Ke hoach kham pha cuoi tuan",
-      destination: input.destination ?? "Da Nang",
+      title: input.title ?? "Kế hoạch khám phá cuối tuần",
+      destination: input.destination ?? "Đà Nẵng",
       startDate: input.startDate ?? new Date("2026-06-01"),
       endDate: input.endDate ?? new Date("2026-06-03"),
       budget: input.budget ?? "balanced",
-      notes: input.notes ?? "Uu tien cac dia diem chill va de di chuyen.",
+      notes: input.notes ?? "Ưu tiên các địa điểm chill và dễ di chuyển.",
     },
   });
 }
@@ -247,11 +266,43 @@ export async function createTripStopFixture(
       tripId,
       dayNumber: input.dayNumber ?? 1,
       orderIndex: input.orderIndex ?? 1,
-      title: input.title ?? "Diem dung thu nghiem",
-      location: input.location ?? "Da Nang",
+      title: input.title ?? "Điểm dừng thử nghiệm",
+      location: input.location ?? "Đà Nẵng",
       note: input.note ?? null,
       startTime: input.startTime ?? null,
       endTime: input.endTime ?? null,
+    },
+  });
+}
+
+export async function createCollectionFixture(input: CollectionFixtureInput) {
+  return prisma.collection.create({
+    data: {
+      id: input.id ?? randomUUID(),
+      userId: input.userId,
+      title: input.title ?? "Bộ sưu tập cuối tuần",
+      isPublic: input.isPublic ?? false,
+    },
+  });
+}
+
+export async function addPlaceToCollectionFixture(collectionId: string, placeId: string) {
+  return prisma.collectionPlace.create({
+    data: {
+      collectionId,
+      placeId,
+    },
+  });
+}
+
+export async function createPlaceUpdateFixture(input: PlaceUpdateFixtureInput) {
+  return prisma.placeUpdate.create({
+    data: {
+      id: input.id ?? randomUUID(),
+      placeId: input.placeId,
+      ownerId: input.ownerId,
+      title: input.title ?? "Cập nhật mới",
+      content: input.content ?? "Nội dung cập nhật thử nghiệm",
     },
   });
 }
@@ -261,8 +312,8 @@ export async function createBookingOptionFixture(input: BookingOptionFixtureInpu
     data: {
       id: input.id ?? randomUUID(),
       placeId: input.placeId,
-      title: input.title ?? "Ban toi cho 2 nguoi",
-      description: input.description ?? "Option booking thu nghiem",
+      title: input.title ?? "Bàn tối cho 2 người",
+      description: input.description ?? "Option booking thử nghiệm",
       priceLabel: input.priceLabel ?? "350.000đ / bàn",
       durationMinutes: input.durationMinutes ?? 90,
       maxPartySize: input.maxPartySize ?? 2,
@@ -293,7 +344,7 @@ export async function createBookingFixture(input: BookingFixtureInput) {
       slotId: input.slotId,
       travelerId: input.travelerId,
       partySize: input.partySize ?? 2,
-      note: input.note ?? "Booking thu nghiem",
+      note: input.note ?? "Booking thử nghiệm",
       status: input.status ?? "PENDING",
     },
   });

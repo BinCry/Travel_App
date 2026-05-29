@@ -1,7 +1,8 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TOP_SAFE_AREA_EDGES, withBottomInset } from '../common/edgeToEdge';
 import UserAvatar from '../components/UserAvatar';
 import styles from './ProfileScreen.styles';
 import { useAuth } from '../context/AuthContext';
@@ -9,14 +10,18 @@ import { PROFILE_AVATAR_INNER_SIZE } from '../common/profileAvatar';
 import type { AppNavigationOnlyProps } from '../types/navigation';
 
 export default function ProfileScreen({ navigation }: AppNavigationOnlyProps<'Profile'>) {
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const displayName = user?.fullName || user?.name || 'Người dùng';
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={TOP_SAFE_AREA_EDGES}>
       <ScrollView
         testID="profile-scroll-view"
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: withBottomInset(insets.bottom, 32) },
+        ]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.headerSection}>
           <View style={styles.avatarContainer}>
@@ -93,6 +98,21 @@ export default function ProfileScreen({ navigation }: AppNavigationOnlyProps<'Pr
 
           <TouchableOpacity
             style={styles.profileMenuItemContainer}
+            onPress={() => navigation.navigate('Collections')}>
+            <View style={[styles.profileMenuItemIcon, { backgroundColor: '#e0f2fe' }]}>
+              <Ionicons name="folder-open-outline" size={28} color="#0284c7" />
+            </View>
+            <View style={styles.profileMenuTextContainer}>
+              <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Bộ sưu tập</Text>
+              <Text style={{ color: '#928d8d', fontSize: 15 }}>
+                Gom địa điểm theo bộ sưu tập, chuyến đi hoặc chủ đề riêng
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.profileMenuItemContainer}
             onPress={() => navigation.navigate('Trips')}>
             <View style={[styles.profileMenuItemIcon, { backgroundColor: '#dff5ff' }]}>
               <Ionicons name="airplane-outline" size={28} color="#00AEEF" />
@@ -101,6 +121,21 @@ export default function ProfileScreen({ navigation }: AppNavigationOnlyProps<'Pr
               <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Hành trình của bạn</Text>
               <Text style={{ color: '#928d8d', fontSize: 15 }}>
                 Tạo kế hoạch đi chơi, chia ngày và sắp xếp điểm dừng
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.profileMenuItemContainer}
+            onPress={() => navigation.navigate('Notifications')}>
+            <View style={[styles.profileMenuItemIcon, { backgroundColor: '#ede9fe' }]}>
+              <Ionicons name="notifications-outline" size={28} color="#7c3aed" />
+            </View>
+            <View style={styles.profileMenuTextContainer}>
+              <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Thông báo</Text>
+              <Text style={{ color: '#928d8d', fontSize: 15 }}>
+                Xem booking được cập nhật, phản hồi review và tin mới từ địa điểm
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />

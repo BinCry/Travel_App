@@ -10,6 +10,11 @@ import {
   promotionItemSchema,
 } from '@travel-app/shared/contracts/owner';
 import {
+  placeUpdateCreateRequestSchema,
+  placeUpdateSchema,
+  placeUpdateUpdateRequestSchema,
+} from '@travel-app/shared/contracts/place-updates';
+import {
   availabilitySlotCreateRequestSchema,
   availabilitySlotSchema,
   availabilitySlotUpdateRequestSchema,
@@ -41,6 +46,9 @@ import type {
   OwnerPromotionUpdateRequest,
   OwnerReviewReply,
   OwnerReviewReplyUpsertRequest,
+  PlaceUpdate,
+  PlaceUpdateCreateRequest,
+  PlaceUpdateUpdateRequest,
   PromotionItem,
 } from './types';
 import { apiClient, parseApiData, parseApiDataWithMeta } from './client';
@@ -211,4 +219,30 @@ export async function upsertOwnerReviewReply(
 
 export async function deleteOwnerReviewReply(reviewId: string): Promise<void> {
   await apiClient.delete(`/owner/reviews/${reviewId}/reply`);
+}
+
+export async function createOwnerPlaceUpdate(
+  placeId: string,
+  body: PlaceUpdateCreateRequest
+): Promise<PlaceUpdate> {
+  const res = await apiClient.post(
+    `/owner/places/${placeId}/updates`,
+    placeUpdateCreateRequestSchema.parse(body)
+  );
+  return parseApiData(res.data, placeUpdateSchema);
+}
+
+export async function updateOwnerPlaceUpdate(
+  updateId: string,
+  body: PlaceUpdateUpdateRequest
+): Promise<PlaceUpdate> {
+  const res = await apiClient.patch(
+    `/owner/place-updates/${updateId}`,
+    placeUpdateUpdateRequestSchema.parse(body)
+  );
+  return parseApiData(res.data, placeUpdateSchema);
+}
+
+export async function deleteOwnerPlaceUpdate(updateId: string): Promise<void> {
+  await apiClient.delete(`/owner/place-updates/${updateId}`);
 }

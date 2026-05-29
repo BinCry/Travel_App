@@ -20,6 +20,9 @@ jest.mock('../lib/api/owner', () => ({
   fetchOwnerPlaceReviews: (...args: unknown[]) => mockFetchOwnerPlaceReviews(...args),
   updateOwnerPlace: jest.fn(),
   deleteOwnerPlace: jest.fn(),
+  createOwnerPlaceUpdate: jest.fn(),
+  updateOwnerPlaceUpdate: jest.fn(),
+  deleteOwnerPlaceUpdate: jest.fn(),
   createPromotion: jest.fn(),
   updatePromotion: jest.fn(),
   togglePromotion: jest.fn(),
@@ -50,6 +53,7 @@ describe('ManagePlaceScreen', () => {
       latitude: null,
       longitude: null,
       promotions: [],
+      updates: [],
     });
     mockFetchOwnerPlaceReviews.mockResolvedValueOnce([
       {

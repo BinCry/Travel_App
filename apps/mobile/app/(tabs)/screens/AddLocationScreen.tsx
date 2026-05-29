@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   Text,
@@ -14,7 +13,9 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../common/colors';
+import { TOP_SAFE_AREA_EDGES, withBottomInset } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import PromotionCard from "../components/PromotionCard";
 import PromotionEditor from '../components/PromotionEditor';
@@ -28,6 +29,7 @@ import type { PromotionItem } from '../types/promotion';
 import type { AppNavigationOnlyProps } from '../types/navigation';
 
 const AddLocationScreen = ({ navigation }: AppNavigationOnlyProps<'Add Location'>) => {
+  const insets = useSafeAreaInsets();
   const [activeCategory, setActiveCategory] = useState<PlaceCategory>('attractions');
   const [isAdding, setIsAdding] = useState(false);
   const [promotions, setPromotions] = useState<PromotionItem[]>([]);
@@ -142,7 +144,7 @@ const AddLocationScreen = ({ navigation }: AppNavigationOnlyProps<'Add Location'
   };
 
   return (
-    <SafeAreaView style={styles.background}>
+    <SafeAreaView style={styles.background} edges={TOP_SAFE_AREA_EDGES}>
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.header}>
@@ -155,7 +157,12 @@ const AddLocationScreen = ({ navigation }: AppNavigationOnlyProps<'Add Location'
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: withBottomInset(insets.bottom, 28) },
+        ]}
+        showsVerticalScrollIndicator={false}>
         <View style={styles.alertContainer}>
           <Ionicons name="warning" size={20} color={colors.warning} style={{ marginRight: 8 }} />
           <View style={{ flex: 1 }}>

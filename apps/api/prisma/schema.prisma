@@ -46,9 +46,12 @@ model User {
   reviewReplies         ReviewReply[]
   reviewLikes           ReviewLike[]
   favorites             Favorite[]
+  collections           Collection[]
+  notifications         Notification[]
   trips                 Trip[]
   bookings              Booking[]
   ownedPlaces           Place[]
+  placeUpdates          PlaceUpdate[]
   passwordResetOtps     PasswordResetOtp[]
   emailVerificationOtps EmailVerificationOtp[]
 }
@@ -101,9 +104,35 @@ model Place {
   owner            User?        @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   reviews          Review[]
   favorites        Favorite[]
+  collectionEntries CollectionPlace[]
   promotions       Promotion[]
+  updates          PlaceUpdate[]
   bookingOptions   BookingOption[]
   bookings         Booking[]
+}
+
+model Collection {
+  id        String            @id @default(cuid())
+  userId    Int
+  title     String
+  isPublic  Boolean           @default(false)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  places    CollectionPlace[]
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model CollectionPlace {
+  collectionId String
+  placeId      String
+  addedAt      DateTime   @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  place        Place      @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, placeId])
+  @@index([placeId])
 }
 
 model Promotion {
@@ -170,6 +199,36 @@ model Favorite {
   place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
   @@id([userId, placeId])
+}
+
+model PlaceUpdate {
+  id        String   @id @default(cuid())
+  placeId    String
+  ownerId    Int
+  title      String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  place      Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([placeId, createdAt(sort: Desc)])
+  @@index([ownerId, createdAt(sort: Desc)])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId     Int
+  type       String
+  title      String
+  message    String
+  payload    Json?
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, readAt])
 }
 
 model Trip {

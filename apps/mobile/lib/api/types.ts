@@ -45,6 +45,22 @@ export type {
   PlaceReview,
 } from '@travel-app/shared/contracts/places';
 export type {
+  CollectionCreateRequest,
+  CollectionDetail,
+  CollectionPlaceItem,
+  CollectionSummary,
+  CollectionUpdateRequest,
+} from '@travel-app/shared/contracts/collections';
+export type {
+  NotificationItem,
+  NotificationType,
+} from '@travel-app/shared/contracts/notifications';
+export type {
+  PlaceUpdate,
+  PlaceUpdateCreateRequest,
+  PlaceUpdateUpdateRequest,
+} from '@travel-app/shared/contracts/place-updates';
+export type {
   OwnerPlaceReview,
   OwnerReviewReply,
   OwnerReviewReplyUpsertRequest,

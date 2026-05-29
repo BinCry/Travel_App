@@ -16,7 +16,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../common/colors';
+import { withBottomInset } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import { calculateRatingStats, RatingBar, ratingBarStyles, RatingStartBar } from '../components/Rating';
 import { PicturesContainer } from '../components/ReviewPicture';
@@ -30,6 +32,10 @@ import type { ReviewListItem } from '../../../lib/api/types';
 import { getApiErrorMessage } from '../context/AuthContext';
 import type { AppScreenProps } from '../types/navigation';
 
+const REVIEW_AVATAR_FRAME_SIZE = 56;
+const REVIEW_AVATAR_BORDER_WIDTH = 3;
+const REVIEW_AVATAR_INNER_SIZE = REVIEW_AVATAR_FRAME_SIZE - REVIEW_AVATAR_BORDER_WIDTH * 2;
+
 function ReviewItem({ item, onLikeToggle }: { item: ReviewListItem; onLikeToggle: (id: string) => void }) {
   const handlePress = () => {
     onLikeToggle(item.id);
@@ -39,8 +45,18 @@ function ReviewItem({ item, onLikeToggle }: { item: ReviewListItem; onLikeToggle
     <View style={{ backgroundColor: colors.white, margin: 10, padding: 15, borderRadius: 20, elevation: 3 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <View style={{ flexDirection: 'row', columnGap: 10, alignItems: 'center' }}>
-          <View style={[styles.avatarBorder, { width: 50, height: 50, overflow: 'hidden', borderRadius: 25 }]}>
-            <UserAvatar uri={item.avatarUrl} size={50} borderWidth={0} />
+          <View
+            style={[
+              styles.avatarBorder,
+              {
+                width: REVIEW_AVATAR_FRAME_SIZE,
+                height: REVIEW_AVATAR_FRAME_SIZE,
+                borderRadius: REVIEW_AVATAR_FRAME_SIZE / 2,
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+            ]}>
+            <UserAvatar uri={item.avatarUrl} size={REVIEW_AVATAR_INNER_SIZE} borderWidth={0} />
           </View>
           <View style={{ flexDirection: 'column' }}>
             <Text style={{ color: 'black', fontSize: 18, fontWeight: 'bold' }}>{item.username}</Text>
@@ -97,6 +113,7 @@ export default function ViewReviewsScreen({
   navigation,
   route,
 }: AppScreenProps<'All Reviews'>) {
+  const insets = useSafeAreaInsets();
   const placeId = route.params?.placeId as string | undefined;
   const [reviewText, setReviewText] = useState('');
   const [userRating, setUserRating] = useState(5);
@@ -266,7 +283,10 @@ export default function ViewReviewsScreen({
                 <View style={[styles.overlay, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
                   <Pressable
                     style={[styles.roundButton, {
-                      position: 'absolute', left: 15, top: 15, zIndex: 1,
+                      position: 'absolute',
+                      left: 15,
+                      top: Math.max(insets.top + 8, 15),
+                      zIndex: 1,
                       backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 20, padding: 5
                     }]}
                     onPress={() => navigation.goBack()}
@@ -292,7 +312,7 @@ export default function ViewReviewsScreen({
             </View>
           </View>
         }
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: withBottomInset(insets.bottom, 12) }}
         ListEmptyComponent={
           <Text style={{ textAlign: 'center', marginTop: 20, color: colors.textSecondary }}>
             Chưa có đánh giá nào. Hãy là người đầu tiên!
@@ -316,7 +336,11 @@ export default function ViewReviewsScreen({
         </View>
       )}
 
-      <View style={styles.bottomInputContainer}>
+      <View
+        style={[
+          styles.bottomInputContainer,
+          { paddingBottom: withBottomInset(insets.bottom, 10) },
+        ]}>
         <TouchableOpacity style={styles.addPhotoIcon} onPress={handlePickImage}>
           <Ionicons name="camera-outline" size={24} color="#908a8a" />
         </TouchableOpacity>

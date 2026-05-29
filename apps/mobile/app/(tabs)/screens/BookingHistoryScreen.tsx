@@ -9,9 +9,11 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cancelBooking, fetchMyBookings } from '../../../lib/api/bookings';
 import type { TravelerBooking } from '../../../lib/api/types';
 import { colors } from '../common/colors';
+import { withBottomInset } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import type { AppNavigationOnlyProps } from '../types/navigation';
 
@@ -37,6 +39,7 @@ function statusTone(status: TravelerBooking['status']) {
 export default function BookingHistoryScreen({
   navigation,
 }: AppNavigationOnlyProps<'Booking History'>) {
+  const insets = useSafeAreaInsets();
   const [bookings, setBookings] = useState<TravelerBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -95,7 +98,11 @@ export default function BookingHistoryScreen({
     <FlatList
       data={bookings}
       keyExtractor={(item) => item.id}
-      contentContainerStyle={{ padding: 18, paddingBottom: 32, gap: 16 }}
+      contentContainerStyle={{
+        padding: 18,
+        paddingBottom: withBottomInset(insets.bottom, 24),
+        gap: 16,
+      }}
       showsVerticalScrollIndicator={false}
       refreshing={loading}
       onRefresh={loadBookings}

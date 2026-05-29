@@ -3,6 +3,8 @@ import AiTripBuilderScreen from './screens/AiTripBuilderScreen';
 import BookingCheckoutScreen from './screens/BookingCheckoutScreen';
 import BookingHistoryScreen from './screens/BookingHistoryScreen';
 import ChangePasswordScreen from './screens/ChangePasswordScreen';
+import CollectionDetailScreen from './screens/CollectionDetailScreen';
+import CollectionsScreen from './screens/CollectionsScreen';
 import DetailLocationScreen from './screens/DetailLocationScreen';
 import DeleteAccountScreen from './screens/DeleteAccountScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
@@ -12,6 +14,7 @@ import LoginScreen from './screens/LoginScreen';
 import LogoutScreen from './screens/LogoutScreen';
 import ManageBookingsScreen from './screens/ManageBookingsScreen';
 import ManagePlaceScreen from './screens/ManagePlaceScreen';
+import NotificationsScreen from './screens/NotificationsScreen';
 import OwnerManagementScreen from './screens/OwnerManagementScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import RegisterScreen from './screens/RegisterScreen';
@@ -151,6 +154,39 @@ const AuthenticatedStack = ({ isOwner }: { isOwner: boolean }) => (
       name="Saved Places"
       component={SavedPlacesScreen}
       options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="Collections"
+      component={CollectionsScreen}
+      options={{
+        headerShown: true,
+        title: 'Bộ sưu tập của bạn',
+        headerStyle: { backgroundColor: '#FFFFFF' },
+        headerShadowVisible: false,
+        headerTintColor: '#000',
+      }}
+    />
+    <Stack.Screen
+      name="Collection Detail"
+      component={CollectionDetailScreen}
+      options={{
+        headerShown: true,
+        title: 'Chi tiết bộ sưu tập',
+        headerStyle: { backgroundColor: '#FFFFFF' },
+        headerShadowVisible: false,
+        headerTintColor: '#000',
+      }}
+    />
+    <Stack.Screen
+      name="Notifications"
+      component={NotificationsScreen}
+      options={{
+        headerShown: true,
+        title: 'Thông báo',
+        headerStyle: { backgroundColor: '#FFFFFF' },
+        headerShadowVisible: false,
+        headerTintColor: '#000',
+      }}
     />
     <Stack.Screen
       name="Trips"

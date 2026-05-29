@@ -51,7 +51,7 @@ function mapReviewListItem(r: {
   const ownerReply: OwnerReviewReply | null = r.reply
     ? {
         id: r.reply.id,
-        ownerName: r.reply.owner.fullName || r.reply.owner.username || "Chu dia diem",
+        ownerName: r.reply.owner.fullName || r.reply.owner.username || "Chủ địa điểm",
         content: r.reply.content,
         date: r.reply.createdAt.toLocaleDateString("en-US", {
           month: "long",
@@ -160,7 +160,7 @@ export const reviewsService = {
             ownerReply: r.reply
               ? {
                   id: r.reply.id,
-                  ownerName: r.reply.owner.fullName || r.reply.owner.username || "Chu dia diem",
+                  ownerName: r.reply.owner.fullName || r.reply.owner.username || "Chủ địa điểm",
                   content: r.reply.content,
                   date: r.reply.createdAt.toLocaleDateString("en-US", {
                     month: "long",

@@ -82,6 +82,18 @@ ownerRouter.get(
   })
 );
 
+ownerRouter.post(
+  "/places/:placeId/updates",
+  wrapAsync(async (req, res) => {
+    const data = await ownerService.createPlaceUpdate(
+      req.user!.sub,
+      String(req.params.placeId),
+      req.body
+    );
+    sendCreated(res, data);
+  })
+);
+
 ownerRouter.get(
   "/places/:placeId/booking-options",
   wrapAsync(async (req, res) => {
@@ -242,6 +254,26 @@ ownerRouter.delete(
   "/reviews/:reviewId/reply",
   wrapAsync(async (req, res) => {
     await ownerService.deleteReviewReply(req.user!.sub, String(req.params.reviewId));
+    sendEmpty(res);
+  })
+);
+
+ownerRouter.patch(
+  "/place-updates/:updateId",
+  wrapAsync(async (req, res) => {
+    const data = await ownerService.updatePlaceUpdate(
+      req.user!.sub,
+      String(req.params.updateId),
+      req.body
+    );
+    sendOk(res, data);
+  })
+);
+
+ownerRouter.delete(
+  "/place-updates/:updateId",
+  wrapAsync(async (req, res) => {
+    await ownerService.deletePlaceUpdate(req.user!.sub, String(req.params.updateId));
     sendEmpty(res);
   })
 );

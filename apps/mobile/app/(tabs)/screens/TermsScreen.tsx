@@ -1,6 +1,8 @@
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../common/colors';
+import { TOP_SAFE_AREA_EDGES, withBottomInset } from '../common/edgeToEdge';
 import type { AppNavigationOnlyProps } from '../types/navigation';
 
 const sections = [
@@ -32,9 +34,15 @@ const sections = [
 ];
 
 export default function TermsScreen(_: AppNavigationOnlyProps<'Terms'>) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.background}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView style={styles.background} edges={TOP_SAFE_AREA_EDGES}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: withBottomInset(insets.bottom, 20) },
+        ]}>
         <View style={styles.hero}>
           <Text style={styles.title}>Điều khoản sử dụng</Text>
           <Text style={styles.subtitle}>

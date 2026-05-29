@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   fetchOwnerAnalyticsSummary,
   fetchOwnerPlaces,
@@ -17,6 +18,7 @@ import {
 import type { OwnerPlace } from '../../../lib/api/owner';
 import type { OwnerAnalyticsSummary } from '../../../lib/api/types';
 import { colors } from '../common/colors';
+import { withBottomInset } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import type { AppNavigationOnlyProps } from '../types/navigation';
 import styles from './OwnerManagementScreen.styles';
@@ -51,6 +53,7 @@ function renderPlace(item: OwnerPlace, onEdit: (item: OwnerPlace) => void) {
 export default function OwnerManagementScreen({
   navigation,
 }: AppNavigationOnlyProps<'Manage'>) {
+  const insets = useSafeAreaInsets();
   const [places, setPlaces] = useState<OwnerPlace[]>([]);
   const [analytics, setAnalytics] = useState<OwnerAnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -242,7 +245,7 @@ export default function OwnerManagementScreen({
         renderItem={({ item }) => renderPlace(item, handleEditPress)}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={headerComponent}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: withBottomInset(insets.bottom, 12) }}
         showsVerticalScrollIndicator={false}
         refreshing={loading}
         onRefresh={loadPlaces}

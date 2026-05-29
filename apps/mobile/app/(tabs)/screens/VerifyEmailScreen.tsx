@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { authStyles } from '../common/authTheme';
 import { colors } from '../common/colors';
+import { TOP_SAFE_AREA_EDGES } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import { useAuth } from '../context/AuthContext';
 import type { AppScreenProps } from '../types/navigation';
@@ -69,7 +70,7 @@ export default function VerifyEmailScreen({
   };
 
   return (
-    <SafeAreaView style={authStyles.safeScreen}>
+    <SafeAreaView style={authStyles.safeScreen} edges={TOP_SAFE_AREA_EDGES}>
       <KeyboardAvoidingView
         style={authStyles.keyboard}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

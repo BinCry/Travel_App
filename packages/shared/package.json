@@ -29,6 +29,18 @@
       "types": "./dist/contracts/places.d.ts",
       "default": "./dist/contracts/places.js"
     },
+    "./contracts/place-updates": {
+      "types": "./dist/contracts/place-updates.d.ts",
+      "default": "./dist/contracts/place-updates.js"
+    },
+    "./contracts/collections": {
+      "types": "./dist/contracts/collections.d.ts",
+      "default": "./dist/contracts/collections.js"
+    },
+    "./contracts/notifications": {
+      "types": "./dist/contracts/notifications.d.ts",
+      "default": "./dist/contracts/notifications.js"
+    },
     "./contracts/reviews": {
       "types": "./dist/contracts/reviews.d.ts",
       "default": "./dist/contracts/reviews.js"

@@ -3,14 +3,15 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { changePassword } from '../../../lib/api/users';
 import { colors } from '../common/colors';
+import { TOP_SAFE_AREA_EDGES } from '../common/edgeToEdge';
 import { getApiErrorMessage } from '../context/AuthContext';
 import type { AppNavigationOnlyProps } from '../types/navigation';
 
@@ -61,7 +62,7 @@ export default function ChangePasswordScreen({
   };
 
   return (
-    <SafeAreaView style={styles.background}>
+    <SafeAreaView style={styles.background} edges={TOP_SAFE_AREA_EDGES}>
       <View style={styles.card}>
         <Text style={styles.title}>Đổi mật khẩu</Text>
         <Text style={styles.subtitle}>

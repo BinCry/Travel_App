@@ -8,11 +8,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { planTrip } from '../../../lib/api/ai';
 import { createTrip, createTripStop } from '../../../lib/api/trips';
 import type { TripBudget, TripPlanResponse } from '../../../lib/api/types';
 import { colors } from '../common/colors';
+import { TOP_SAFE_AREA_EDGES, withBottomInset } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import type { AppScreenProps } from '../types/navigation';
 
@@ -36,6 +37,7 @@ export default function AiTripBuilderScreen({
   navigation,
   route,
 }: AppScreenProps<'AI Trip Builder'>) {
+  const insets = useSafeAreaInsets();
   const [query, setQuery] = useState(route.params?.initialQuery?.trim() || 'Chuyến đi cuối tuần thư giãn');
   const [location, setLocation] = useState(route.params?.initialLocation?.trim() || 'Gần bạn');
   const [tripTitle, setTripTitle] = useState('Hành trình gợi ý từ AI');
@@ -117,9 +119,9 @@ export default function AiTripBuilderScreen({
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f7fbfd' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f7fbfd' }} edges={TOP_SAFE_AREA_EDGES}>
       <ScrollView
-        contentContainerStyle={{ padding: 18, paddingBottom: 36 }}
+        contentContainerStyle={{ padding: 18, paddingBottom: withBottomInset(insets.bottom, 28) }}
         showsVerticalScrollIndicator={false}>
         <View
           style={{

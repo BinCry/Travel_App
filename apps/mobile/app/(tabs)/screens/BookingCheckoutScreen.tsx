@@ -8,9 +8,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBooking, fetchPlaceBookingOptions } from '../../../lib/api/bookings';
 import type { BookingOption } from '../../../lib/api/types';
 import { colors } from '../common/colors';
+import { withBottomInset } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import type { AppScreenProps } from '../types/navigation';
 
@@ -18,6 +20,7 @@ export default function BookingCheckoutScreen({
   navigation,
   route,
 }: AppScreenProps<'Booking Checkout'>) {
+  const insets = useSafeAreaInsets();
   const placeId = route.params.placeId;
   const placeName = route.params.placeName ?? 'Địa điểm';
   const [options, setOptions] = useState<BookingOption[]>([]);
@@ -90,7 +93,7 @@ export default function BookingCheckoutScreen({
         partySize: parsedPartySize,
         note: note.trim() || undefined,
       });
-      Alert.alert('Đặt chỗ thành công', 'Booking của bạn đã được gửi để owner xác nhận.', [
+      Alert.alert('Đặt chỗ thành công', 'Booking của bạn đã được gửi để chủ địa điểm xác nhận.', [
         {
           text: 'Xem lịch sử',
           onPress: () => navigation.navigate('Booking History'),
@@ -113,7 +116,7 @@ export default function BookingCheckoutScreen({
 
   return (
     <ScrollView
-      contentContainerStyle={{ padding: 18, paddingBottom: 36 }}
+      contentContainerStyle={{ padding: 18, paddingBottom: withBottomInset(insets.bottom, 28) }}
       showsVerticalScrollIndicator={false}>
       <View
         style={{
@@ -185,7 +188,7 @@ export default function BookingCheckoutScreen({
                 </Text>
               ) : null}
               <Text style={{ color: colors.textSecondary }}>
-                {option.priceLabel || 'Liên hệ owner để xác nhận giá'} • Tối đa {option.maxPartySize}{' '}
+                {option.priceLabel || 'Liên hệ chủ địa điểm để xác nhận giá'} • Tối đa {option.maxPartySize}{' '}
                 người • {option.durationMinutes} phút
               </Text>
             </View>
@@ -225,7 +228,7 @@ export default function BookingCheckoutScreen({
               </View>
             ) : (
               <Text style={{ color: colors.textSecondary }}>
-                Owner chưa mở slot nào cho option này.
+                Chủ địa điểm chưa mở slot nào cho option này.
               </Text>
             )}
           </View>
@@ -266,7 +269,7 @@ export default function BookingCheckoutScreen({
         </View>
         <View>
           <Text style={{ marginBottom: 8, color: colors.textSecondary, fontWeight: '600' }}>
-            Ghi chú cho owner
+            Ghi chú cho chủ địa điểm
           </Text>
           <TextInput
             value={note}

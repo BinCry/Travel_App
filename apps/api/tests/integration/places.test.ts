@@ -14,6 +14,9 @@ const prismaMock = {
   favorite: {
     findUnique: vi.fn(),
   },
+  notification: {
+    create: vi.fn(),
+  },
   review: {
     count: vi.fn(),
     findMany: vi.fn(),
@@ -74,6 +77,7 @@ describe("places routes", () => {
       featureLabel: "Open Now",
       about: "Local dining experience in Tokyo.",
       priceLevel: 40,
+      updates: [],
       reviews: [
         {
           id: "review-1",

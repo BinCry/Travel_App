@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../common/colors';
+import { TOP_SAFE_AREA_EDGES } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import { useAuth } from '../context/AuthContext';
 
@@ -51,7 +52,7 @@ export default function DeleteAccountScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.background}>
+    <SafeAreaView style={styles.background} edges={TOP_SAFE_AREA_EDGES}>
       <View style={styles.card}>
         <Text style={styles.title}>Xóa tài khoản</Text>
         <Text style={styles.description}>

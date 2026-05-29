@@ -41,7 +41,7 @@ describe("db bookings flows", () => {
       .send({
         slotId: slot.id,
         partySize: 2,
-        note: "Ban gan cua so",
+        note: "Bàn gần cửa sổ",
       });
 
     expect(createRes.status).toBe(201);

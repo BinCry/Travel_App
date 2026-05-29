@@ -15,11 +15,15 @@ async function main() {
   const verifiedAt = new Date();
 
   await prisma.promotion.deleteMany();
+  await prisma.notification.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.availabilitySlot.deleteMany();
   await prisma.bookingOption.deleteMany();
   await prisma.tripStop.deleteMany();
   await prisma.trip.deleteMany();
+  await prisma.collectionPlace.deleteMany();
+  await prisma.collection.deleteMany();
+  await prisma.placeUpdate.deleteMany();
   await prisma.reviewReply.deleteMany();
   await prisma.reviewLike.deleteMany();
   await prisma.reviewImage.deleteMany();
@@ -87,7 +91,8 @@ async function main() {
     data: {
       reviewId: review.id,
       ownerId: owner.id,
-      content: "Cam on ban da ghe tham. Ben minh rat vui khi Gion dem lai trai nghiem nhe nhang cho chuyen di cua ban.",
+      content:
+        "Cảm ơn bạn đã ghé thăm. Bên mình rất vui khi Gion đem lại trải nghiệm nhẹ nhàng cho chuyến đi của bạn.",
     },
   });
 
@@ -147,11 +152,30 @@ async function main() {
     ],
   });
 
+  await prisma.placeUpdate.createMany({
+    data: [
+      {
+        placeId: firstPlace.id,
+        ownerId: owner.id,
+        title: "Góc chụp ảnh đẹp nhất hôm nay",
+        content:
+          "Khung đường đèn lồng đang rất đẹp vào lúc 17:30 - 18:15. Nếu bạn ghé qua trong khoảng này thì nhớ mang theo máy ảnh.",
+      },
+      {
+        placeId: secondPlace.id,
+        ownerId: owner.id,
+        title: "Thêm combo bữa tối nhẹ",
+        content:
+          "Nhà hàng vừa thêm combo cho cặp đôi, phù hợp để đặt bàn sớm và dùng bữa tối thư giãn.",
+      },
+    ],
+  });
+
   const dinnerOption = await prisma.bookingOption.create({
     data: {
       placeId: secondPlace.id,
-      title: "Ban toi cho 2 nguoi",
-      description: "Khung gio phu hop cho bua toi nhe nhang va thoai mai.",
+      title: "Bàn tối cho 2 người",
+      description: "Khung giờ phù hợp cho bữa tối nhẹ nhàng và thoải mái.",
       priceLabel: "350.000đ / bàn",
       durationMinutes: 90,
       maxPartySize: 2,
@@ -176,52 +200,102 @@ async function main() {
       slotId: dinnerSlot.id,
       travelerId: traveler.id,
       partySize: 2,
-      note: "Ban gan cua so neu con cho",
+      note: "Bàn gần cửa sổ nếu còn chỗ",
       status: "CONFIRMED",
     },
+  });
+
+  const summerCollection = await prisma.collection.create({
+    data: {
+      userId: traveler.id,
+      title: "Bộ sưu tập hè 2026",
+      isPublic: false,
+    },
+  });
+
+  await prisma.collectionPlace.createMany({
+    data: [
+      {
+        collectionId: summerCollection.id,
+        placeId: firstPlace.id,
+      },
+      {
+        collectionId: summerCollection.id,
+        placeId: secondPlace.id,
+      },
+    ],
   });
 
   await prisma.trip.create({
     data: {
       userId: traveler.id,
-      title: "Kyoto thu gian cuoi tuan",
-      destination: "Kyoto, Nhat Ban",
+      title: "Kyoto thư giãn cuối tuần",
+      destination: "Kyoto, Nhật Bản",
       startDate: new Date("2026-06-12"),
       endDate: new Date("2026-06-14"),
       budget: "balanced",
-      notes: "Uu tien dia diem yen tinh, di bo nhe va co thoi gian chup anh.",
+      notes: "Ưu tiên địa điểm yên tĩnh, đi bộ nhẹ và có thời gian chụp ảnh.",
       stops: {
         create: [
           {
             dayNumber: 1,
             orderIndex: 1,
-            title: "Check-in khach san",
-            location: "Khu trung tam Kyoto",
-            note: "Nhan phong truoc 15:00",
+            title: "Check-in khách sạn",
+            location: "Khu trung tâm Kyoto",
+            note: "Nhận phòng trước 15:00",
             startTime: "14:00",
             endTime: "15:00",
           },
           {
             dayNumber: 1,
             orderIndex: 2,
-            title: "Dao Gion District",
-            location: "Kyoto, Nhat Ban",
-            note: "Di bo va chup anh luc hoang hon",
+            title: "Dạo Gion District",
+            location: "Kyoto, Nhật Bản",
+            note: "Đi bộ và chụp ảnh lúc hoàng hôn",
             startTime: "16:30",
             endTime: "18:30",
           },
           {
             dayNumber: 2,
             orderIndex: 1,
-            title: "An toi tai Happy Restaurant",
-            location: "Tokyo, Nhat Ban",
-            note: "Dat ban cho 2 nguoi",
+            title: "Ăn tối tại Happy Restaurant",
+            location: "Tokyo, Nhật Bản",
+            note: "Đặt bàn cho 2 người",
             startTime: "18:00",
             endTime: "20:00",
           },
         ],
       },
     },
+  });
+
+  await prisma.notification.createMany({
+    data: [
+      {
+        userId: traveler.id,
+        type: "booking_status",
+        title: "Booking của bạn đã được xác nhận",
+        message: "Happy Restaurant đã xác nhận bàn tối cho 2 người.",
+        payload: {
+          screen: "Booking History",
+          params: {
+            placeId: secondPlace.id,
+          },
+        },
+      },
+      {
+        userId: traveler.id,
+        type: "place_update",
+        title: "Gion District có cập nhật mới",
+        message: "Góc chụp ảnh đẹp nhất hôm nay",
+        payload: {
+          screen: "Detail Location",
+          params: {
+            placeId: firstPlace.id,
+          },
+        },
+      },
+    ],
   });
 
   console.info("Đã nạp dữ liệu mẫu thành công.");

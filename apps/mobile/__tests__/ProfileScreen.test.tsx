@@ -14,7 +14,7 @@ jest.mock("../app/(tabs)/context/AuthContext", () => ({
       emailVerified: true,
       fullName: "Alex Johnson",
       username: "Alex_love_travel",
-      location: "Việt Nam",
+      location: "Viá»‡t Nam",
       avatarUrl: "https://example.com/avatar.jpg",
       name: "Alex Johnson",
       role: "traveler",
@@ -34,6 +34,8 @@ describe("ProfileScreen", () => {
     expect(screen.getByText("Alex Johnson")).toBeTruthy();
     expect(screen.getByText("Tài khoản & bảo mật")).toBeTruthy();
     expect(screen.getByText("Địa điểm đã lưu")).toBeTruthy();
+    expect(screen.getByText("Bộ sưu tập")).toBeTruthy();
+    expect(screen.getByText("Thông báo")).toBeTruthy();
     expect(screen.getByText("Đánh giá của bạn")).toBeTruthy();
   });
 });

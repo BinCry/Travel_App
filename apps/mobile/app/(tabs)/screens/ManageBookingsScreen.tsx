@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type {
   AvailabilitySlot,
   BookingOption,
@@ -27,6 +28,7 @@ import {
   updateOwnerSlot,
 } from '../../../lib/api/owner';
 import { colors } from '../common/colors';
+import { withBottomInset } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import type { AppScreenProps } from '../types/navigation';
 
@@ -116,6 +118,7 @@ function actionButtonsForBooking(status: OwnerPlaceBooking['status']) {
 export default function ManageBookingsScreen({
   route,
 }: AppScreenProps<'Manage Bookings'>) {
+  const insets = useSafeAreaInsets();
   const placeId = route.params.placeId;
   const placeName = route.params.placeName ?? 'Địa điểm';
   const [options, setOptions] = useState<BookingOption[]>([]);
@@ -337,7 +340,7 @@ export default function ManageBookingsScreen({
 
   return (
     <ScrollView
-      contentContainerStyle={{ padding: 18, paddingBottom: 36 }}
+      contentContainerStyle={{ padding: 18, paddingBottom: withBottomInset(insets.bottom, 28) }}
       showsVerticalScrollIndicator={false}>
       <View
         style={{

@@ -14,20 +14,24 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { placeCategories } from '../common/placeCategories';
 import PromotionCard from '../components/PromotionCard';
 import PromotionEditor from '../components/PromotionEditor';
 import { colors } from '../common/colors';
+import { TOP_SAFE_AREA_EDGES, withBottomInset } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import { styles as formStyles } from './AddLocationScreen.style';
 import {
+  createOwnerPlaceUpdate,
   createPromotion,
+  deleteOwnerPlaceUpdate,
   deleteOwnerReviewReply,
   deleteOwnerPlace,
   deletePromotion,
   fetchOwnerPlace,
   fetchOwnerPlaceReviews,
+  updateOwnerPlaceUpdate,
   updateOwnerPlace,
   updatePromotion,
   upsertOwnerReviewReply,
@@ -38,6 +42,7 @@ import type {
   OwnerPlaceDetail,
   OwnerPlaceReview,
   PlaceCategory,
+  PlaceUpdate,
   PromotionItem,
 } from '../../../lib/api/types';
 import type { AppScreenProps } from '../types/navigation';
@@ -55,6 +60,7 @@ export default function ManagePlaceScreen({
   navigation,
   route,
 }: AppScreenProps<'Manage Place'>) {
+  const insets = useSafeAreaInsets();
   const placeId = route.params.placeId;
   const [place, setPlace] = useState<OwnerPlaceDetail | null>(null);
   const [name, setName] = useState('');
@@ -77,6 +83,12 @@ export default function ManagePlaceScreen({
   const [replyDraft, setReplyDraft] = useState('');
   const [savingReplyReviewId, setSavingReplyReviewId] = useState<string | null>(null);
   const [deletingReplyReviewId, setDeletingReplyReviewId] = useState<string | null>(null);
+  const [addingUpdate, setAddingUpdate] = useState(false);
+  const [editingUpdateId, setEditingUpdateId] = useState<string | null>(null);
+  const [updateTitleDraft, setUpdateTitleDraft] = useState('');
+  const [updateContentDraft, setUpdateContentDraft] = useState('');
+  const [savingUpdate, setSavingUpdate] = useState(false);
+  const [deletingUpdateId, setDeletingUpdateId] = useState<string | null>(null);
 
   const hydratePlace = useCallback((data: OwnerPlaceDetail) => {
     setPlace(data);
@@ -247,6 +259,79 @@ export default function ManagePlaceScreen({
     setReplyDraft(review.ownerReply?.content ?? '');
   };
 
+  const resetUpdateEditor = () => {
+    setAddingUpdate(false);
+    setEditingUpdateId(null);
+    setUpdateTitleDraft('');
+    setUpdateContentDraft('');
+  };
+
+  const handleStartCreateUpdate = () => {
+    setAddingUpdate(true);
+    setEditingUpdateId(null);
+    setUpdateTitleDraft('');
+    setUpdateContentDraft('');
+  };
+
+  const handleStartEditUpdate = (update: PlaceUpdate) => {
+    setAddingUpdate(false);
+    setEditingUpdateId(update.id);
+    setUpdateTitleDraft(update.title);
+    setUpdateContentDraft(update.content);
+  };
+
+  const handleSaveUpdate = async () => {
+    if (!updateTitleDraft.trim() || !updateContentDraft.trim()) {
+      Alert.alert('Lá»—i', 'Vui lÃ²ng nháº­p Ä‘á»§ tiÃªu Ä‘á» vÃ  ná»™i dung cáº­p nháº­t.');
+      return;
+    }
+
+    setSavingUpdate(true);
+    try {
+      if (editingUpdateId) {
+        await updateOwnerPlaceUpdate(editingUpdateId, {
+          title: updateTitleDraft.trim(),
+          content: updateContentDraft.trim(),
+        });
+      } else {
+        await createOwnerPlaceUpdate(placeId, {
+          title: updateTitleDraft.trim(),
+          content: updateContentDraft.trim(),
+        });
+      }
+      resetUpdateEditor();
+      await loadPlace();
+    } catch (error) {
+      Alert.alert('Lá»—i', toUserMessage(error));
+    } finally {
+      setSavingUpdate(false);
+    }
+  };
+
+  const handleDeleteUpdate = (update: PlaceUpdate) => {
+    Alert.alert('XÃ³a cáº­p nháº­t', `Báº¡n muá»‘n xÃ³a "${update.title}"?`, [
+      { text: 'Há»§y', style: 'cancel' },
+      {
+        text: 'XÃ³a',
+        style: 'destructive',
+        onPress: async () => {
+          setDeletingUpdateId(update.id);
+          try {
+            await deleteOwnerPlaceUpdate(update.id);
+            if (editingUpdateId === update.id) {
+              resetUpdateEditor();
+            }
+            await loadPlace();
+          } catch (error) {
+            Alert.alert('Lá»—i', toUserMessage(error));
+          } finally {
+            setDeletingUpdateId(null);
+          }
+        },
+      },
+    ]);
+  };
+
   const handleCancelReply = () => {
     setEditingReplyReviewId(null);
     setReplyDraft('');
@@ -314,8 +399,12 @@ export default function ManagePlaceScreen({
   }
 
   return (
-    <SafeAreaView style={screenStyles.background}>
-      <ScrollView contentContainerStyle={screenStyles.content}>
+    <SafeAreaView style={screenStyles.background} edges={TOP_SAFE_AREA_EDGES}>
+      <ScrollView
+        contentContainerStyle={[
+          screenStyles.content,
+          { paddingBottom: withBottomInset(insets.bottom, 24) },
+        ]}>
         <View style={screenStyles.header}>
           <Pressable onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
@@ -449,6 +538,87 @@ export default function ManagePlaceScreen({
             </Text>
           </View>
         ) : null}
+        <View style={screenStyles.sectionHeader}>
+          <Text style={screenStyles.sectionTitle}>Cập nhật cho khách</Text>
+          {!addingUpdate && !editingUpdateId ? (
+            <TouchableOpacity onPress={handleStartCreateUpdate}>
+              <Text style={screenStyles.addLink}>+ Đăng cập nhật</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {addingUpdate || editingUpdateId ? (
+          <View style={screenStyles.replyEditorCard}>
+            <Text style={screenStyles.replyEditorTitle}>
+              {editingUpdateId ? 'Chỉnh sửa cập nhật' : 'Đăng cập nhật mới'}
+            </Text>
+            <TextInput
+              value={updateTitleDraft}
+              onChangeText={setUpdateTitleDraft}
+              placeholder="Tiêu đề ngắn gọn, nổi bật"
+              style={screenStyles.updateTitleInput}
+            />
+            <TextInput
+              value={updateContentDraft}
+              onChangeText={setUpdateContentDraft}
+              placeholder="Nội dung cập nhật hữu ích cho khách trước khi ghé..."
+              multiline
+              style={screenStyles.replyEditorInput}
+            />
+            <View style={screenStyles.replyActionsRow}>
+              <TouchableOpacity
+                style={screenStyles.replyPrimaryButton}
+                onPress={() => void handleSaveUpdate()}
+                disabled={savingUpdate}>
+                {savingUpdate ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={screenStyles.replyPrimaryButtonText}>Lưu cập nhật</Text>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity style={screenStyles.replySecondaryButton} onPress={resetUpdateEditor}>
+                <Text style={screenStyles.replySecondaryButtonText}>Hủy</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null}
+
+        {place.updates.length ? (
+          place.updates.map((update) => {
+            const isDeletingUpdate = deletingUpdateId === update.id;
+            return (
+              <View key={update.id} style={screenStyles.reviewCard}>
+                <Text style={screenStyles.reviewAuthor}>{update.title}</Text>
+                <Text style={screenStyles.reviewBody}>{update.content}</Text>
+                <Text style={screenStyles.ownerReplyMeta}>
+                  {new Date(update.createdAt).toLocaleDateString('vi-VN')} • {update.ownerName}
+                </Text>
+                <View style={screenStyles.replyActionsRow}>
+                  <TouchableOpacity onPress={() => handleStartEditUpdate(update)}>
+                    <Text style={screenStyles.replyLinkText}>Sửa cập nhật</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleDeleteUpdate(update)}
+                    disabled={isDeletingUpdate}>
+                    {isDeletingUpdate ? (
+                      <ActivityIndicator color={colors.danger} size="small" />
+                    ) : (
+                      <Text style={screenStyles.replyDeleteText}>Xóa cập nhật</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            );
+          })
+        ) : !addingUpdate ? (
+          <View style={screenStyles.emptyPromo}>
+            <Text style={screenStyles.emptyPromoTitle}>Chưa có cập nhật nào</Text>
+            <Text style={screenStyles.emptyPromoText}>
+              Đăng nhanh lưu ý mới, góc chụp đẹp, món nổi bật hoặc thông tin khách cần biết trước khi ghé.
+            </Text>
+          </View>
+        ) : null}
+
         <View style={screenStyles.sectionHeader}>
           <Text style={screenStyles.sectionTitle}>Đánh giá & phản hồi</Text>
         </View>
@@ -736,6 +906,15 @@ const screenStyles = StyleSheet.create({
   replyEditorTitle: {
     fontSize: 15,
     fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  updateTitleInput: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#d9e3eb',
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     color: colors.textPrimary,
   },
   replyEditorInput: {

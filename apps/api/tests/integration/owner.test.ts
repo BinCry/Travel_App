@@ -34,6 +34,10 @@ const prismaMock = {
     upsert: vi.fn(),
     delete: vi.fn(),
   },
+  notification: {
+    create: vi.fn(),
+    createMany: vi.fn(),
+  },
   favorite: {
     count: vi.fn(),
   },
@@ -214,12 +218,13 @@ describe("owner routes", () => {
     prismaMock.user.findUnique.mockResolvedValueOnce({ role: "OWNER" });
     prismaMock.review.findUnique.mockResolvedValueOnce({
       id: "review-1",
-      place: { ownerId: 21 },
+      place: { id: "place-1", ownerId: 21, name: "Lantern Cafe" },
+      user: { id: 12 },
       reply: null,
     });
     prismaMock.reviewReply.upsert.mockResolvedValueOnce({
       id: "reply-1",
-      content: "Cam on ban da danh gia.",
+      content: "Cảm ơn bạn đã đánh giá.",
       createdAt: new Date("2026-05-29T10:00:00.000Z"),
       owner: { fullName: "Owner Demo", username: "owner_demo" },
     });
@@ -227,12 +232,12 @@ describe("owner routes", () => {
     const res = await request(app)
       .put("/api/v1/owner/reviews/review-1/reply")
       .set("Authorization", `Bearer ${makeToken(21)}`)
-      .send({ content: "Cam on ban da danh gia." });
+      .send({ content: "Cảm ơn bạn đã đánh giá." });
 
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
     const payload = ownerReviewReplySchema.parse(res.body.data);
-    expect(payload.content).toBe("Cam on ban da danh gia.");
+    expect(payload.content).toBe("Cảm ơn bạn đã đánh giá.");
   });
 
   it("returns analytics summary for the owner dashboard", async () => {
@@ -277,7 +282,7 @@ describe("owner routes", () => {
       {
         id: "option-1",
         placeId: "place-1",
-        title: "Ban toi cho 2 nguoi",
+        title: "Bàn tối cho 2 người",
         description: "View dep",
         priceLabel: "350.000đ / bàn",
         durationMinutes: 90,
@@ -293,7 +298,7 @@ describe("owner routes", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
-    expect(res.body.data[0]?.title).toBe("Ban toi cho 2 nguoi");
+    expect(res.body.data[0]?.title).toBe("Bàn tối cho 2 người");
   });
 
   it("updates booking status for an owned place", async () => {
@@ -304,14 +309,14 @@ describe("owner routes", () => {
       placeName: "Happy Restaurant",
       placeImageUrl: "https://cdn.example.com/place.jpg",
       optionId: "option-1",
-      optionTitle: "Ban toi cho 2 nguoi",
+      optionTitle: "Bàn tối cho 2 người",
       slotId: "slot-1",
       slotDateLabel: "15/06/2026",
       slotTimeLabel: "18:00 - 19:30",
       slotStartAt: "2026-06-15T11:00:00.000Z",
       slotEndAt: "2026-06-15T12:30:00.000Z",
       partySize: 2,
-      note: "Ban gan cua so",
+      note: "Bàn gần cửa sổ",
       status: "CONFIRMED",
       createdAt: "2026-05-29T11:00:00.000Z",
       updatedAt: "2026-05-29T11:10:00.000Z",

@@ -10,12 +10,18 @@ import {
   type OwnerPromotionCreateRequest,
 } from "@travel-app/shared/contracts/owner";
 import {
+  placeUpdateCreateRequestSchema,
+  placeUpdateSchema,
+  placeUpdateUpdateRequestSchema,
+} from "@travel-app/shared/contracts/place-updates";
+import {
   ownerPlaceReviewSchema,
   ownerReviewReplySchema,
   ownerReviewReplyUpsertRequestSchema,
 } from "@travel-app/shared/contracts/reviews";
 import { prisma } from "../database/client.js";
 import { fromPrismaPlaceCategory, toPrismaPlaceCategory } from "./placeCategory.js";
+import { notificationsService } from "./notifications.service.js";
 
 function toOwnerPlaceDto(p: {
   id: string;
@@ -73,7 +79,7 @@ function mapOwnerReply(reply: {
 }) {
   return ownerReviewReplySchema.parse({
     id: reply.id,
-    ownerName: reply.owner.fullName || reply.owner.username || "Chu dia diem",
+    ownerName: reply.owner.fullName || reply.owner.username || "Chủ địa điểm",
     content: reply.content,
     date: formatReviewDate(reply.createdAt),
   });
@@ -107,6 +113,26 @@ function mapOwnerReview(review: {
   });
 }
 
+function mapPlaceUpdate(update: {
+  id: string;
+  placeId: string;
+  title: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  owner: { fullName: string | null; username: string | null };
+}) {
+  return placeUpdateSchema.parse({
+    id: update.id,
+    placeId: update.placeId,
+    ownerName: update.owner.fullName || update.owner.username || "Chủ địa điểm",
+    title: update.title,
+    content: update.content,
+    createdAt: update.createdAt.toISOString(),
+    updatedAt: update.updatedAt.toISOString(),
+  });
+}
+
 async function assertOwnedPlace(ownerId: number, placeId: string) {
   const place = await prisma.place.findFirst({
     where: { id: placeId, ownerId },
@@ -119,7 +145,8 @@ async function assertOwnedReview(ownerId: number, reviewId: string) {
   const review = await prisma.review.findUnique({
     where: { id: reviewId },
     include: {
-      place: { select: { ownerId: true } },
+      place: { select: { id: true, ownerId: true, name: true } },
+      user: { select: { id: true } },
       reply: {
         include: {
           owner: { select: { fullName: true, username: true } },
@@ -133,6 +160,35 @@ async function assertOwnedReview(ownerId: number, reviewId: string) {
   }
 
   return review;
+}
+
+async function getOwnedPlaceUpdate(ownerId: number, updateId: string) {
+  const update = await prisma.placeUpdate.findFirst({
+    where: {
+      id: updateId,
+      ownerId,
+    },
+    include: {
+      owner: {
+        select: {
+          fullName: true,
+          username: true,
+        },
+      },
+      place: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  if (!update) {
+    throw Object.assign(new Error("PLACE_UPDATE_NOT_FOUND"), { statusCode: 404 });
+  }
+
+  return update;
 }
 
 async function createPromotionsForPlace(
@@ -269,7 +325,15 @@ export const ownerService = {
   async getPlace(ownerId: number, placeId: string) {
     const place = await prisma.place.findFirst({
       where: { id: placeId, ownerId },
-      include: { promotions: { orderBy: { createdAt: "desc" } } },
+      include: {
+        promotions: { orderBy: { createdAt: "desc" } },
+        updates: {
+          include: {
+            owner: { select: { fullName: true, username: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+      },
     });
     if (!place) throw Object.assign(new Error("PLACE_NOT_FOUND"), { statusCode: 404 });
     return ownerPlaceDetailSchema.parse({
@@ -284,6 +348,7 @@ export const ownerService = {
       latitude: place.latitude,
       longitude: place.longitude,
       promotions: place.promotions.map(toPromotionDto),
+      updates: place.updates.map(mapPlaceUpdate),
     });
   },
 
@@ -384,7 +449,7 @@ export const ownerService = {
   },
 
   async upsertReviewReply(ownerId: number, reviewId: string, body: unknown) {
-    await assertOwnedReview(ownerId, reviewId);
+    const review = await assertOwnedReview(ownerId, reviewId);
     const data = ownerReviewReplyUpsertRequestSchema.parse(body);
     const reply = await prisma.reviewReply.upsert({
       where: { reviewId },
@@ -400,6 +465,13 @@ export const ownerService = {
       include: {
         owner: { select: { fullName: true, username: true } },
       },
+    });
+    await notificationsService.notifyReviewReply({
+      travelerId: review.user.id,
+      placeId: review.place.id,
+      placeName: review.place.name,
+      reviewId,
+      ownerName: reply.owner.fullName || reply.owner.username || "Chủ địa điểm",
     });
     return mapOwnerReply(reply);
   },
@@ -464,5 +536,73 @@ export const ownerService = {
       data: { isActive: !promo.isActive },
     });
     return toPromotionDto(updated);
+  },
+
+  async createPlaceUpdate(ownerId: number, placeId: string, body: unknown) {
+    const place = await assertOwnedPlace(ownerId, placeId);
+    const data = placeUpdateCreateRequestSchema.parse(body);
+    const update = await prisma.placeUpdate.create({
+      data: {
+        placeId: place.id,
+        ownerId,
+        title: data.title.trim(),
+        content: data.content.trim(),
+      },
+      include: {
+        owner: {
+          select: {
+            fullName: true,
+            username: true,
+          },
+        },
+      },
+    });
+
+    await notificationsService.notifyPlaceUpdateFollowers({
+      placeId: place.id,
+      placeName: place.name,
+      updateId: update.id,
+      title: data.title.trim(),
+      ownerId,
+    });
+
+    return mapPlaceUpdate(update);
+  },
+
+  async updatePlaceUpdate(ownerId: number, updateId: string, body: unknown) {
+    const existing = await getOwnedPlaceUpdate(ownerId, updateId);
+    const data = placeUpdateUpdateRequestSchema.parse(body);
+    const updated = await prisma.placeUpdate.update({
+      where: { id: updateId },
+      data: {
+        ...(data.title !== undefined ? { title: data.title.trim() } : {}),
+        ...(data.content !== undefined ? { content: data.content.trim() } : {}),
+      },
+      include: {
+        owner: {
+          select: {
+            fullName: true,
+            username: true,
+          },
+        },
+      },
+    });
+
+    await notificationsService.notifyPlaceUpdateFollowers({
+      placeId: existing.place.id,
+      placeName: existing.place.name,
+      updateId: existing.id,
+      title: updated.title,
+      ownerId,
+    });
+
+    return mapPlaceUpdate(updated);
+  },
+
+  async deletePlaceUpdate(ownerId: number, updateId: string) {
+    await getOwnedPlaceUpdate(ownerId, updateId);
+    await prisma.placeUpdate.delete({
+      where: { id: updateId },
+    });
   },
 };

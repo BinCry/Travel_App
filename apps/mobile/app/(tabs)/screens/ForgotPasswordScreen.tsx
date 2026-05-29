@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { forgotPassword, resetPassword, verifyForgotPasswordOtp } from '../../../lib/api/auth';
 import { authStyles } from '../common/authTheme';
 import { colors } from '../common/colors';
+import { TOP_SAFE_AREA_EDGES } from '../common/edgeToEdge';
 import { getApiErrorMessage } from '../context/AuthContext';
 import type { AppNavigationOnlyProps } from '../types/navigation';
 
@@ -121,7 +122,7 @@ export default function ForgotPasswordScreen({
   };
 
   return (
-    <SafeAreaView style={authStyles.safeScreen}>
+    <SafeAreaView style={authStyles.safeScreen} edges={TOP_SAFE_AREA_EDGES}>
       <KeyboardAvoidingView
         style={authStyles.keyboard}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

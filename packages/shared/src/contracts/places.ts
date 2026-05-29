@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { placeUpdateSchema } from "./place-updates.js";
 import { ownerReviewReplySchema } from "./reviews.js";
 
 export const placeCategorySchema = z.enum(["attractions", "dining", "festivals"]);
@@ -36,6 +37,7 @@ export const placeDetailSchema = z.object({
   about: z.string().optional(),
   priceLevel: z.number().nullable().optional(),
   reviews: z.array(placeReviewSchema),
+  updates: z.array(placeUpdateSchema),
   isFavorite: z.boolean().optional(),
 });
 

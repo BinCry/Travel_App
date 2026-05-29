@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../common/colors';
 import { authStyles } from '../common/authTheme';
+import { TOP_SAFE_AREA_EDGES } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import { getApiErrorMessage, useAuth } from '../context/AuthContext';
 import type { AppNavigationOnlyProps } from '../types/navigation';
@@ -57,7 +58,7 @@ export default function LoginScreen({ navigation }: AppNavigationOnlyProps<'Logi
   };
 
   return (
-    <SafeAreaView style={authStyles.safeScreen}>
+    <SafeAreaView style={authStyles.safeScreen} edges={TOP_SAFE_AREA_EDGES}>
       <KeyboardAvoidingView
         style={authStyles.keyboard}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

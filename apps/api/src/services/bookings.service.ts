@@ -17,6 +17,7 @@ import {
 } from "@travel-app/shared/contracts/bookings";
 import { prisma } from "../database/client.js";
 import type { Pagination } from "../http/pagination.js";
+import { notificationsService } from "./notifications.service.js";
 
 const CAPACITY_BLOCKING_STATUSES: PrismaBookingStatus[] = [
   "DRAFT",
@@ -929,6 +930,16 @@ export const bookingsService = {
         },
       },
     });
+
+    if (booking.status !== data.status) {
+      await notificationsService.notifyBookingStatusChange({
+        travelerId: booking.travelerId,
+        placeId: booking.place.id,
+        placeName: booking.place.name,
+        bookingId: booking.id,
+        status: data.status,
+      });
+    }
 
     return mapOwnerBooking(updated);
   },

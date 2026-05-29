@@ -44,7 +44,7 @@ describe("booking routes", () => {
       {
         id: "option-1",
         placeId: "place-1",
-        title: "Ban toi cho 2 nguoi",
+        title: "Bàn tối cho 2 người",
         description: "View dep",
         priceLabel: "350.000đ / bàn",
         durationMinutes: 90,
@@ -84,14 +84,14 @@ describe("booking routes", () => {
       placeName: "Happy Restaurant",
       placeImageUrl: "https://cdn.example.com/place.jpg",
       optionId: "option-1",
-      optionTitle: "Ban toi cho 2 nguoi",
+      optionTitle: "Bàn tối cho 2 người",
       slotId: "slot-1",
       slotDateLabel: "15/06/2026",
       slotTimeLabel: "18:00 - 19:30",
       slotStartAt: "2026-06-15T11:00:00.000Z",
       slotEndAt: "2026-06-15T12:30:00.000Z",
       partySize: 2,
-      note: "Ban gan cua so",
+      note: "Bàn gần cửa sổ",
       status: "PENDING",
       createdAt: "2026-05-29T11:00:00.000Z",
       updatedAt: "2026-05-29T11:00:00.000Z",
@@ -104,7 +104,7 @@ describe("booking routes", () => {
       .send({
         slotId: "slot-1",
         partySize: 2,
-        note: "Ban gan cua so",
+        note: "Bàn gần cửa sổ",
       });
 
     expect(res.status).toBe(201);
