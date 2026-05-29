@@ -1,8 +1,8 @@
 # Kiến trúc hệ thống Travel App
 
-Cập nhật: 2026-05-28
+Cập nhật: 2026-05-29
 
-## Cấu trúc monorepo
+## Tổng quan
 
 ```text
 apps/
@@ -12,113 +12,175 @@ packages/
   shared/
 ```
 
-## Luồng request backend
+Kiến trúc hiện tại là monorepo TypeScript với một backend REST và một mobile app Expo dùng chung contract validation.
 
-1. Express nhận request HTTP.
-2. Middleware gắn `requestId` và log request cơ bản.
-3. Middleware auth giải mã JWT nếu route yêu cầu đăng nhập.
-4. Rate limit bảo vệ các nhóm route nhạy cảm:
-   - `auth`
-   - `uploads`
-   - `ai`
-5. Service validate payload bằng shared Zod schema.
+## Kiến trúc backend
+
+### Lớp xử lý request
+
+1. Express nhận HTTP request.
+2. Middleware gắn `requestId`, log request và parse JSON body.
+3. `requireAuth` giải mã JWT cho route cần đăng nhập.
+4. `requireOwner` chặn các route chỉ dành cho owner.
+5. Service layer validate dữ liệu bằng shared Zod contracts.
 6. Prisma thao tác với PostgreSQL.
 7. Response helper trả về chuẩn `ApiResponse`.
 
-## Luồng tài khoản
+### Nhóm route chính
 
-### Đăng ký
+- `/api/v1/auth`
+- `/api/v1/users`
+- `/api/v1/places`
+- `/api/v1/reviews`
+- `/api/v1/favorites`
+- `/api/v1/uploads`
+- `/api/v1/ai`
+- `/api/v1/trips`
+- `/api/v1/bookings`
+- `/api/v1/owner`
+- `/health`
+- `/openapi.json`
 
-1. tạo user mới với `emailVerifiedAt = null`
-2. tạo `EmailVerificationOtp`
-3. gửi email OTP tiếng Việt qua SMTP
-4. mobile chuyển sang màn `Xác minh email`
+## Kiến trúc mobile
 
-### Xác minh email
+### Tầng ứng dụng
 
-1. lấy OTP gần nhất còn hiệu lực
-2. tăng `attempts` nếu nhập sai
-3. cập nhật `emailVerifiedAt`
-4. cấp JWT và mở khóa ứng dụng
+- Expo Router + React Navigation cho tab và stack flow.
+- `AuthContext` giữ trạng thái đăng nhập, role và email verification.
+- `apps/mobile/lib/api/*` là lớp gọi API bằng Axios.
+- Tất cả response parse lại bằng shared contract từ `packages/shared`.
 
-### Quên mật khẩu
+### Nhóm màn chính
 
-1. tạo `PasswordResetOtp`
-2. gửi OTP qua email
-3. verify OTP
-4. đặt mật khẩu mới và consume OTP
+- Auth: login, register, verify email, forgot/reset password.
+- Explore: home, detail location, review list, saved places.
+- Trip: trip list, trip planner, AI trip builder.
+- Booking: booking checkout, booking history, owner manage bookings.
+- Profile: profile, edit profile, password, delete account.
+- Owner: owner dashboard, add location, manage place.
 
-### Xóa tài khoản
+## Domain model chính
 
-- `traveler`
-  - xóa user
-  - review / favorite / like cascade theo quan hệ Prisma
-  - dọn OTP còn lại
-- `owner`
-  - xóa toàn bộ `Place` theo `ownerId`
-  - `Promotion`, `Review`, `Favorite` liên quan cascade theo `Place`
-  - xóa user và OTP còn lại
+### User và Auth
 
-## Luồng dữ liệu mobile
+- `User`
+- `EmailVerificationOtp`
+- `PasswordResetOtp`
 
-1. Screen gọi API trong `apps/mobile/lib/api`
-2. Axios gắn token từ secure storage
-3. Response parse bằng shared Zod contract
-4. `AuthContext` chuẩn hóa `user`, `role`, `emailVerified`
-5. Navigation phân nhánh theo trạng thái đăng nhập và vai trò
+### Traveler engagement
+
+- `Favorite`
+- `Review`
+- `ReviewLike`
+- `ReviewImage`
+- `Trip`
+- `TripStop`
+
+### Owner growth
+
+- `Place`
+- `Promotion`
+- `ReviewReply`
+
+### Reservation
+
+- `BookingOption`
+- `AvailabilitySlot`
+- `Booking`
+
+## Luồng nghiệp vụ quan trọng
+
+### 1. Auth flow
+
+1. User đăng ký với role `traveler` hoặc `owner`.
+2. Backend tạo OTP xác minh email.
+3. User xác minh OTP để mở khóa đăng nhập đầy đủ.
+4. JWT được cấp và mobile chuyển sang tab app.
+
+### 2. Traveler trip flow
+
+1. Traveler tạo trip thủ công hoặc vào AI Trip Builder.
+2. AI trả suggestion theo `query + location`.
+3. User lưu suggestion thành `Trip` và `TripStop`.
+4. User có thể chỉnh lại stop, ngày, ghi chú hoặc nhân bản trip.
+
+### 3. Booking flow
+
+1. Owner tạo `BookingOption` và `AvailabilitySlot`.
+2. Traveler xem slot bookable từ màn chi tiết địa điểm.
+3. Traveler tạo booking với `slotId`, `partySize`, `note`.
+4. Owner xem booking trong màn quản lý địa điểm và đổi trạng thái.
+5. Traveler xem lịch sử booking hoặc hủy booking nếu còn hợp lệ.
+
+### 4. Owner feedback flow
+
+1. Traveler viết review cho place.
+2. Owner mở review list của place mình.
+3. Owner tạo hoặc cập nhật `ReviewReply`.
+4. Traveler nhìn thấy phản hồi owner ở màn review.
+
+### 5. Owner analytics flow
+
+1. Owner dashboard gọi `/owner/analytics/summary`.
+2. Backend tổng hợp place count, booking count, promotion count, review/favorite/rating và top places.
+3. Mobile render summary cards và top-place cards ngay trong màn owner management.
 
 ## Ranh giới phân quyền
 
-### `anonymous`
+### Anonymous
 
-- xem danh sách địa điểm
-- xem chi tiết địa điểm
-- xem review công khai
-- không được mutation
+- Chỉ được đọc dữ liệu công khai.
+- Không được mutation.
 
-### `traveler`
+### Traveler
 
-- toàn bộ quyền của `anonymous`
-- quản lý hồ sơ của mình
-- lưu địa điểm
-- tạo / sửa / xóa review của mình
-- đổi mật khẩu
-- xóa tài khoản
-- dùng AI trip planning
+- Chỉ được thao tác trên dữ liệu cá nhân:
+  - profile
+  - review của mình
+  - favorite của mình
+  - trip của mình
+  - booking của mình
 
-### `owner`
+### Owner
 
-- toàn bộ quyền của `traveler`
-- tạo / sửa / xóa địa điểm của mình
-- tạo / sửa / bật tắt / xóa ưu đãi của mình
-- upload ảnh bìa địa điểm
-- không được thao tác dữ liệu owner khác
+- Có toàn bộ quyền traveler.
+- Chỉ được thao tác trên place do chính mình sở hữu.
+- Không được sửa place, promotion, booking, review reply của owner khác.
+
+## Ràng buộc dữ liệu và trạng thái
+
+### Trip
+
+- Trip stop gắn `dayNumber` và `orderIndex`.
+- Reorder stop được xử lý ở backend để tránh xung đột thứ tự.
+
+### Booking
+
+- Slot có `capacity` và `remainingCapacity`.
+- Backend chặn overbook.
+- Booking có state machine:
+  - `DRAFT`
+  - `PENDING`
+  - `CONFIRMED`
+  - `REJECTED`
+  - `CANCELLED`
+  - `COMPLETED`
+  - `NO_SHOW`
+  - `REFUND_PENDING`
+  - `REFUNDED`
 
 ## Phụ thuộc vận hành
 
-- `Azure Database for PostgreSQL`
-  - nguồn dữ liệu production
-  - bắt buộc cho toàn bộ nghiệp vụ
-- volume upload local
-  - bắt buộc cho avatar / place cover / review image
-- SMTP
-  - bắt buộc cho xác minh email và quên mật khẩu
-- Gemini API
-  - bắt buộc cho AI trip planning
-- Coolify
-  - quản lý env và deploy backend trên VPS
+- PostgreSQL: nguồn dữ liệu chính.
+- Volume upload: lưu avatar, cover image, review image.
+- SMTP: gửi OTP xác minh email và reset password.
+- Gemini API: sinh AI trip suggestion.
+- Coolify + Azure VPS: môi trường deploy backend.
 
-## Chuỗi deploy
+## Chuỗi release
 
-1. dev push code lên `main`
-2. GitHub Actions chạy `CI`
-3. nếu pass, workflow `Promote Deploy` đồng bộ commit đó sang `deploy`
-4. Coolify theo dõi `deploy` và redeploy backend
-
-## Điểm kiểm tra sức khỏe hệ thống
-
-- `/health`
-  - PostgreSQL phải kết nối được
-  - thư mục upload phải ghi được
-- `/openapi.json`
-  - sinh từ code và shared contract
+1. Dev hoàn tất code trên `main`.
+2. Chạy verify API, mobile, DB-backed tests và storage verify.
+3. Commit release-ready lên `main`.
+4. Nếu dùng flow production hiện tại, GitHub Actions sẽ sync `main -> deploy`.
+5. Coolify redeploy backend từ nhánh `deploy`.

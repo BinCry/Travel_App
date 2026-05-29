@@ -1,4 +1,5 @@
 import {
+  ownerAnalyticsSummarySchema,
   ownerPlaceDetailSchema,
   ownerPlaceSchema,
   ownerPlaceCreateRequestSchema,
@@ -8,6 +9,11 @@ import {
   ownerPromotionUpdateRequestSchema,
   type OwnerPromotionCreateRequest,
 } from "@travel-app/shared/contracts/owner";
+import {
+  ownerPlaceReviewSchema,
+  ownerReviewReplySchema,
+  ownerReviewReplyUpsertRequestSchema,
+} from "@travel-app/shared/contracts/reviews";
 import { prisma } from "../database/client.js";
 import { fromPrismaPlaceCategory, toPrismaPlaceCategory } from "./placeCategory.js";
 
@@ -51,12 +57,82 @@ function toPromotionDto(p: {
   });
 }
 
+function formatReviewDate(value: Date) {
+  return value.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+function mapOwnerReply(reply: {
+  id: string;
+  content: string;
+  createdAt: Date;
+  owner: { fullName: string | null; username: string | null };
+}) {
+  return ownerReviewReplySchema.parse({
+    id: reply.id,
+    ownerName: reply.owner.fullName || reply.owner.username || "Chu dia diem",
+    content: reply.content,
+    date: formatReviewDate(reply.createdAt),
+  });
+}
+
+function mapOwnerReview(review: {
+  id: string;
+  rating: number;
+  content: string;
+  createdAt: Date;
+  user: { fullName: string | null; username: string | null; avatarUrl: string | null };
+  images: { url: string }[];
+  _count: { likes: number };
+  reply: {
+    id: string;
+    content: string;
+    createdAt: Date;
+    owner: { fullName: string | null; username: string | null };
+  } | null;
+}) {
+  return ownerPlaceReviewSchema.parse({
+    id: review.id,
+    username: review.user.fullName || review.user.username || "Traveler",
+    rating: review.rating,
+    date: formatReviewDate(review.createdAt),
+    content: review.content,
+    avatarUrl: review.user.avatarUrl,
+    imageUrls: review.images.map((item) => item.url),
+    likes: review._count.likes,
+    ownerReply: review.reply ? mapOwnerReply(review.reply) : null,
+  });
+}
+
 async function assertOwnedPlace(ownerId: number, placeId: string) {
   const place = await prisma.place.findFirst({
     where: { id: placeId, ownerId },
   });
   if (!place) throw Object.assign(new Error("PLACE_NOT_FOUND"), { statusCode: 404 });
   return place;
+}
+
+async function assertOwnedReview(ownerId: number, reviewId: string) {
+  const review = await prisma.review.findUnique({
+    where: { id: reviewId },
+    include: {
+      place: { select: { ownerId: true } },
+      reply: {
+        include: {
+          owner: { select: { fullName: true, username: true } },
+        },
+      },
+    },
+  });
+
+  if (!review || review.place.ownerId !== ownerId) {
+    throw Object.assign(new Error("REVIEW_NOT_FOUND"), { statusCode: 404 });
+  }
+
+  return review;
 }
 
 async function createPromotionsForPlace(
@@ -86,6 +162,108 @@ export const ownerService = {
       orderBy: { name: "asc" },
     });
     return list.map(toOwnerPlaceDto);
+  },
+
+  async getAnalyticsSummary(ownerId: number) {
+    const [places, promotions, bookings, reviewCount, favoriteCount] = await Promise.all([
+      prisma.place.findMany({
+        where: { ownerId },
+        select: {
+          id: true,
+          name: true,
+          averageRating: true,
+          ratingCount: true,
+          _count: {
+            select: {
+              reviews: true,
+              favorites: true,
+              promotions: {
+                where: { isActive: true },
+              },
+              bookings: true,
+            },
+          },
+        },
+      }),
+      prisma.promotion.count({
+        where: {
+          isActive: true,
+          place: {
+            ownerId,
+          },
+        },
+      }),
+      prisma.booking.findMany({
+        where: {
+          place: {
+            ownerId,
+          },
+        },
+        select: {
+          status: true,
+          placeId: true,
+        },
+      }),
+      prisma.review.count({
+        where: {
+          place: {
+            ownerId,
+          },
+        },
+      }),
+      prisma.favorite.count({
+        where: {
+          place: {
+            ownerId,
+          },
+        },
+      }),
+    ]);
+
+    const totalRatingCount = places.reduce((sum, place) => sum + place.ratingCount, 0);
+    const weightedRating = places.reduce(
+      (sum, place) => sum + place.averageRating * place.ratingCount,
+      0
+    );
+
+    const bookingsByStatus = bookings.reduce<Record<string, number>>((acc, booking) => {
+      acc[booking.status] = (acc[booking.status] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    const bookingCountsByPlace = bookings.reduce<Record<string, number>>((acc, booking) => {
+      acc[booking.placeId] = (acc[booking.placeId] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    return ownerAnalyticsSummarySchema.parse({
+      placeCount: places.length,
+      activePromotionCount: promotions,
+      totalBookingCount: bookings.length,
+      pendingBookingCount: bookingsByStatus.PENDING ?? 0,
+      confirmedBookingCount: bookingsByStatus.CONFIRMED ?? 0,
+      completedBookingCount: bookingsByStatus.COMPLETED ?? 0,
+      reviewCount,
+      favoriteCount,
+      averageRating:
+        totalRatingCount > 0 ? Number((weightedRating / totalRatingCount).toFixed(2)) : 0,
+      topPlaces: [...places]
+        .sort(
+          (a, b) =>
+            (bookingCountsByPlace[b.id] ?? 0) - (bookingCountsByPlace[a.id] ?? 0) ||
+            b._count.reviews - a._count.reviews
+        )
+        .slice(0, 3)
+        .map((place) => ({
+          placeId: place.id,
+          placeName: place.name,
+          bookingCount: bookingCountsByPlace[place.id] ?? 0,
+          reviewCount: place._count.reviews,
+          favoriteCount: place._count.favorites,
+          activePromotionCount: place._count.promotions,
+          averageRating: Number(place.averageRating.toFixed(2)),
+        })),
+    });
   },
 
   async getPlace(ownerId: number, placeId: string) {
@@ -184,6 +362,54 @@ export const ownerService = {
       },
     });
     return toPromotionDto(promo);
+  },
+
+  async listPlaceReviews(ownerId: number, placeId: string) {
+    await assertOwnedPlace(ownerId, placeId);
+    const reviews = await prisma.review.findMany({
+      where: { placeId },
+      include: {
+        user: { select: { fullName: true, username: true, avatarUrl: true } },
+        images: true,
+        _count: { select: { likes: true } },
+        reply: {
+          include: {
+            owner: { select: { fullName: true, username: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return reviews.map(mapOwnerReview);
+  },
+
+  async upsertReviewReply(ownerId: number, reviewId: string, body: unknown) {
+    await assertOwnedReview(ownerId, reviewId);
+    const data = ownerReviewReplyUpsertRequestSchema.parse(body);
+    const reply = await prisma.reviewReply.upsert({
+      where: { reviewId },
+      update: {
+        ownerId,
+        content: data.content,
+      },
+      create: {
+        reviewId,
+        ownerId,
+        content: data.content,
+      },
+      include: {
+        owner: { select: { fullName: true, username: true } },
+      },
+    });
+    return mapOwnerReply(reply);
+  },
+
+  async deleteReviewReply(ownerId: number, reviewId: string) {
+    const review = await assertOwnedReview(ownerId, reviewId);
+    if (!review.reply) {
+      throw Object.assign(new Error("REVIEW_REPLY_NOT_FOUND"), { statusCode: 404 });
+    }
+    await prisma.reviewReply.delete({ where: { reviewId } });
   },
 
   async updatePromotion(ownerId: number, promotionId: string, body: unknown) {

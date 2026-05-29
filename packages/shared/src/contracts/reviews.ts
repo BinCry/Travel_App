@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+export const ownerReviewReplySchema = z.object({
+  id: z.string(),
+  ownerName: z.string(),
+  content: z.string(),
+  date: z.string(),
+});
+
+export const ownerReviewReplyUpsertRequestSchema = z.object({
+  content: z.string().trim().min(1).max(3000),
+});
+
 export const reviewCreateRequestSchema = z.object({
   rating: z.number().int().min(1).max(5),
   content: z.string().min(1).max(8000),
@@ -29,6 +40,7 @@ export const reviewListItemSchema = z.object({
   avatarUrl: z.string().nullable(),
   imageUrls: z.array(z.string()),
   likes: z.number().int().nonnegative(),
+  ownerReply: ownerReviewReplySchema.nullable().optional(),
 });
 
 export const userReviewListItemSchema = z.object({
@@ -42,7 +54,10 @@ export const userReviewListItemSchema = z.object({
   content: z.string(),
   imageUrls: z.array(z.string()),
   likes: z.number().int().nonnegative(),
+  ownerReply: ownerReviewReplySchema.nullable().optional(),
 });
+
+export const ownerPlaceReviewSchema = reviewListItemSchema;
 
 export const reviewLikeToggleSchema = z.object({
   liked: z.boolean(),
@@ -59,3 +74,6 @@ export type ReviewListItem = z.infer<typeof reviewListItemSchema>;
 export type UserReviewListItem = z.infer<typeof userReviewListItemSchema>;
 export type ReviewLikeToggleResponse = z.infer<typeof reviewLikeToggleSchema>;
 export type ReviewMutationResult = z.infer<typeof reviewMutationResultSchema>;
+export type OwnerReviewReply = z.infer<typeof ownerReviewReplySchema>;
+export type OwnerReviewReplyUpsertRequest = z.infer<typeof ownerReviewReplyUpsertRequestSchema>;
+export type OwnerPlaceReview = z.infer<typeof ownerPlaceReviewSchema>;

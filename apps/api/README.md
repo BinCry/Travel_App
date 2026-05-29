@@ -1,6 +1,17 @@
 # Travel App Backend API
 
-Backend for the Travel App mobile client.
+Backend Express + Prisma cho Travel App mobile.
+
+## Phạm vi hiện tại
+
+- Auth với email verification OTP.
+- Profile, favorites, reviews.
+- Owner place/promotion management.
+- Trip planner domain.
+- Booking/reservation domain.
+- Owner review replies và analytics summary.
+- Upload avatar, place cover, review images.
+- AI trip planning với Gemini.
 
 ## Stack
 
@@ -8,7 +19,7 @@ Backend for the Travel App mobile client.
 - TypeScript
 - Express 5
 - Prisma
-- Azure Database for PostgreSQL
+- PostgreSQL
 - Local file storage for uploads
 
 ## Local setup
@@ -21,10 +32,9 @@ npm --prefix apps/api run storage:verify
 npm --prefix apps/api run dev
 ```
 
-Create `apps/api/.env` from `apps/api/.env.example` before starting the API.
-Nếu test local bằng PostgreSQL trên máy, dùng `apps/api/local-postgres.env.example` làm mẫu thay vì `.env.example`.
+Tạo `apps/api/.env` từ `apps/api/.env.example` trước khi chạy API.
 
-## Required environment variables
+## Biến môi trường bắt buộc
 
 - `DATABASE_URL`
 - `DIRECT_URL`
@@ -36,47 +46,39 @@ Nếu test local bằng PostgreSQL trên máy, dùng `apps/api/local-postgres.en
 - `ALLOWED_ORIGINS`
 - `TRUST_PROXY`
 
-For production on Azure:
+Nếu cần auth và AI thật, thêm:
 
-- `DATABASE_URL` and `DIRECT_URL` must point to `*.postgres.database.azure.com`
-- both URLs must include `sslmode=require`
-- `PUBLIC_BASE_URL` should be the public HTTPS domain of the API
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASSWORD`
+- `SMTP_FROM`
+- `GEMINI_API_KEY`
+- `GEMINI_MODEL`
 
-`PUBLIC_BASE_URL` must point to the public backend URL so upload endpoints can return absolute image URLs for the mobile app.
-Set `TRUST_PROXY=true` when running behind Coolify or another reverse proxy.
-`ALLOWED_ORIGINS` is optional and only needed for web clients; native mobile requests can leave it empty.
+## Scripts hữu ích
 
-## Upload storage
+```bash
+npm --prefix apps/api run build
+npm --prefix apps/api run test
+npm --prefix apps/api run test:db
+npm --prefix apps/api run db:push
+npm --prefix apps/api run db:migrate:deploy
+npm --prefix apps/api run db:seed
+npm --prefix apps/api run storage:verify
+```
 
-- Review and place-cover uploads are stored on local disk.
-- Express serves them from `/uploads/*`.
-- In Docker or Coolify, mount a persistent volume to `/app/uploads`.
-- Run `npm run storage:verify` after deploy to confirm the volume is writable.
+## Verify
 
-## Azure VPS + Coolify
+```bash
+npm run verify:api
+npm run verify:storage
+npm --prefix apps/api run test:db -- --run tests/db/bookings.db.test.ts tests/db/owner.db.test.ts tests/db/trips.db.test.ts
+```
 
-Deployment notes are in `docs/deploy-azure-coolify.md`.
+## Deploy notes
 
-Use these settings in Coolify:
-
-- Dockerfile path: `apps/api/Dockerfile`
-- Build context: repository root
-- Expose port `3000`
-- Add a persistent volume mounted at `/app/uploads`
-- Manage `.env` values in Coolify, not in the repository
-- Startup command is already handled by the image: it runs `prisma migrate deploy` before the API boots.
-
-## Useful scripts
-
-- `npm run dev`
-- `npm run build`
-- `npm run db:generate`
-- `npm run db:migrate`
-- `npm run db:migrate:deploy`
-- `npm run db:push`
-- `npm run db:seed`
-- `npm run db:sync`
-- `npm run db:studio`
-- `npm run storage:verify`
-- `npm run test`
-- `npm run start:prod`
+- Dockerfile production: `apps/api/Dockerfile`
+- Upload volume production: `/app/uploads`
+- Production PostgreSQL nên dùng `sslmode=require`
+- Flow deploy hiện tại được mô tả trong `docs/deployment-guide.md`

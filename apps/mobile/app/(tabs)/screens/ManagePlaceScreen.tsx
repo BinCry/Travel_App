@@ -7,7 +7,6 @@ import {
   Alert,
   Image,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { placeCategories } from '../common/placeCategories';
 import PromotionCard from '../components/PromotionCard';
 import PromotionEditor from '../components/PromotionEditor';
@@ -23,15 +23,23 @@ import { toUserMessage } from '../common/errorMessages';
 import { styles as formStyles } from './AddLocationScreen.style';
 import {
   createPromotion,
+  deleteOwnerReviewReply,
   deleteOwnerPlace,
   deletePromotion,
   fetchOwnerPlace,
+  fetchOwnerPlaceReviews,
   updateOwnerPlace,
   updatePromotion,
+  upsertOwnerReviewReply,
   togglePromotion,
 } from '../../../lib/api/owner';
 import { uploadPlaceCover } from '../../../lib/api/uploads';
-import type { OwnerPlaceDetail, PlaceCategory, PromotionItem } from '../../../lib/api/types';
+import type {
+  OwnerPlaceDetail,
+  OwnerPlaceReview,
+  PlaceCategory,
+  PromotionItem,
+} from '../../../lib/api/types';
 import type { AppScreenProps } from '../types/navigation';
 
 const DEFAULT_SCHEDULE = {
@@ -62,6 +70,13 @@ export default function ManagePlaceScreen({
   const [promotions, setPromotions] = useState<PromotionItem[]>([]);
   const [addingPromotion, setAddingPromotion] = useState(false);
   const [editingPromotionId, setEditingPromotionId] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<OwnerPlaceReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsError, setReviewsError] = useState<string | null>(null);
+  const [editingReplyReviewId, setEditingReplyReviewId] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState('');
+  const [savingReplyReviewId, setSavingReplyReviewId] = useState<string | null>(null);
+  const [deletingReplyReviewId, setDeletingReplyReviewId] = useState<string | null>(null);
 
   const hydratePlace = useCallback((data: OwnerPlaceDetail) => {
     setPlace(data);
@@ -89,9 +104,24 @@ export default function ManagePlaceScreen({
     }
   }, [hydratePlace, navigation, placeId]);
 
+  const loadReviews = useCallback(async () => {
+    setReviewsLoading(true);
+    try {
+      const data = await fetchOwnerPlaceReviews(placeId);
+      setReviews(data);
+      setReviewsError(null);
+    } catch (error) {
+      setReviews([]);
+      setReviewsError(toUserMessage(error));
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [placeId]);
+
   useEffect(() => {
     void loadPlace();
-  }, [loadPlace]);
+    void loadReviews();
+  }, [loadPlace, loadReviews]);
 
   const handlePickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -212,6 +242,58 @@ export default function ManagePlaceScreen({
     }
   };
 
+  const handleStartReply = (review: OwnerPlaceReview) => {
+    setEditingReplyReviewId(review.id);
+    setReplyDraft(review.ownerReply?.content ?? '');
+  };
+
+  const handleCancelReply = () => {
+    setEditingReplyReviewId(null);
+    setReplyDraft('');
+  };
+
+  const handleSaveReply = async (reviewId: string) => {
+    if (!replyDraft.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập nội dung phản hồi.');
+      return;
+    }
+
+    setSavingReplyReviewId(reviewId);
+    try {
+      await upsertOwnerReviewReply(reviewId, { content: replyDraft.trim() });
+      handleCancelReply();
+      await loadReviews();
+    } catch (error) {
+      Alert.alert('Lỗi', toUserMessage(error));
+    } finally {
+      setSavingReplyReviewId(null);
+    }
+  };
+
+  const handleDeleteReply = (review: OwnerPlaceReview) => {
+    Alert.alert('Xóa phản hồi', `Bạn muốn xóa phản hồi cho review của ${review.username}?`, [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Xóa',
+        style: 'destructive',
+        onPress: async () => {
+          setDeletingReplyReviewId(review.id);
+          try {
+            await deleteOwnerReviewReply(review.id);
+            if (editingReplyReviewId === review.id) {
+              handleCancelReply();
+            }
+            await loadReviews();
+          } catch (error) {
+            Alert.alert('Lỗi', toUserMessage(error));
+          } finally {
+            setDeletingReplyReviewId(null);
+          }
+        },
+      },
+    ]);
+  };
+
   if (loading) {
     return (
       <View style={screenStyles.center}>
@@ -245,6 +327,17 @@ export default function ManagePlaceScreen({
             ) : (
               <Text style={screenStyles.deleteLink}>Xóa</Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[formStyles.button, { marginTop: 12, backgroundColor: '#111827' }]}
+            onPress={() =>
+              navigation.navigate('Manage Bookings', {
+                placeId: place.id,
+                placeName: place.name,
+              })
+            }>
+            <Text style={formStyles.buttonText}>Quản lý booking & slot</Text>
           </TouchableOpacity>
         </View>
 
@@ -356,6 +449,130 @@ export default function ManagePlaceScreen({
             </Text>
           </View>
         ) : null}
+        <View style={screenStyles.sectionHeader}>
+          <Text style={screenStyles.sectionTitle}>Đánh giá & phản hồi</Text>
+        </View>
+
+        {reviewsLoading ? (
+          <View style={screenStyles.emptyPromo}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={[screenStyles.emptyPromoText, { marginTop: 10 }]}>
+              Đang tải đánh giá của khách...
+            </Text>
+          </View>
+        ) : reviewsError ? (
+          <View style={screenStyles.reviewErrorCard}>
+            <Text style={screenStyles.reviewErrorTitle}>Không thể tải đánh giá</Text>
+            <Text style={screenStyles.reviewErrorText}>{reviewsError}</Text>
+            <TouchableOpacity onPress={() => void loadReviews()}>
+              <Text style={screenStyles.addLink}>Thử lại</Text>
+            </TouchableOpacity>
+          </View>
+        ) : reviews.length === 0 ? (
+          <View style={screenStyles.emptyPromo}>
+            <Text style={screenStyles.emptyPromoTitle}>Chưa có đánh giá nào</Text>
+            <Text style={screenStyles.emptyPromoText}>
+              Khi khách để lại review, bạn có thể phản hồi trực tiếp ngay tại đây.
+            </Text>
+          </View>
+        ) : (
+          reviews.map((review) => {
+            const isEditingReply = editingReplyReviewId === review.id;
+            const isSavingReply = savingReplyReviewId === review.id;
+            const isDeletingReply = deletingReplyReviewId === review.id;
+
+            return (
+              <View key={review.id} style={screenStyles.reviewCard}>
+                <View style={screenStyles.reviewHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={screenStyles.reviewAuthor}>{review.username}</Text>
+                    <Text style={screenStyles.reviewMeta}>
+                      {review.date} • {review.rating}/5 • {review.likes} lượt thích
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={screenStyles.reviewBody}>{review.content}</Text>
+
+                {review.imageUrls.length ? (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={screenStyles.reviewImagesRow}>
+                    {review.imageUrls.map((imageUrl, index) => (
+                      <Image
+                        key={`${review.id}-${index}`}
+                        source={{ uri: imageUrl }}
+                        style={screenStyles.reviewImage}
+                      />
+                    ))}
+                  </ScrollView>
+                ) : null}
+
+                {review.ownerReply && !isEditingReply ? (
+                  <View style={screenStyles.ownerReplyBox}>
+                    <Text style={screenStyles.ownerReplyLabel}>
+                      Phản hồi từ {review.ownerReply.ownerName}
+                    </Text>
+                    <Text style={screenStyles.ownerReplyContent}>{review.ownerReply.content}</Text>
+                    <Text style={screenStyles.ownerReplyMeta}>{review.ownerReply.date}</Text>
+                  </View>
+                ) : null}
+
+                {isEditingReply ? (
+                  <View style={screenStyles.replyEditorCard}>
+                    <Text style={screenStyles.replyEditorTitle}>
+                      {review.ownerReply ? 'Chỉnh sửa phản hồi' : 'Phản hồi cho khách'}
+                    </Text>
+                    <TextInput
+                      value={replyDraft}
+                      onChangeText={setReplyDraft}
+                      placeholder="Viết phản hồi ngắn gọn, lịch sự và hữu ích..."
+                      multiline
+                      style={screenStyles.replyEditorInput}
+                    />
+                    <View style={screenStyles.replyActionsRow}>
+                      <TouchableOpacity
+                        style={screenStyles.replyPrimaryButton}
+                        onPress={() => void handleSaveReply(review.id)}
+                        disabled={isSavingReply}>
+                        {isSavingReply ? (
+                          <ActivityIndicator color="#fff" size="small" />
+                        ) : (
+                          <Text style={screenStyles.replyPrimaryButtonText}>Lưu phản hồi</Text>
+                        )}
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={screenStyles.replySecondaryButton}
+                        onPress={handleCancelReply}>
+                        <Text style={screenStyles.replySecondaryButtonText}>Hủy</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={screenStyles.replyActionsRow}>
+                    <TouchableOpacity onPress={() => handleStartReply(review)}>
+                      <Text style={screenStyles.replyLinkText}>
+                        {review.ownerReply ? 'Sửa phản hồi' : 'Phản hồi ngay'}
+                      </Text>
+                    </TouchableOpacity>
+                    {review.ownerReply ? (
+                      <TouchableOpacity
+                        onPress={() => handleDeleteReply(review)}
+                        disabled={isDeletingReply}>
+                        {isDeletingReply ? (
+                          <ActivityIndicator color={colors.danger} size="small" />
+                        ) : (
+                          <Text style={screenStyles.replyDeleteText}>Xóa phản hồi</Text>
+                        )}
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+                )}
+              </View>
+            );
+          })
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -437,5 +654,143 @@ const screenStyles = StyleSheet.create({
   },
   emptyPromoText: {
     color: colors.textSecondary,
+  },
+  reviewCard: {
+    marginTop: 12,
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    rowGap: 10,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  reviewAuthor: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  reviewMeta: {
+    marginTop: 4,
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  reviewBody: {
+    color: colors.textPrimary,
+    lineHeight: 21,
+  },
+  reviewImagesRow: {
+    columnGap: 10,
+  },
+  reviewImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 12,
+    backgroundColor: '#e8eef3',
+  },
+  ownerReplyBox: {
+    borderRadius: 14,
+    backgroundColor: '#eef8fb',
+    borderWidth: 1,
+    borderColor: '#d6edf5',
+    padding: 14,
+    rowGap: 6,
+  },
+  ownerReplyLabel: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  ownerReplyContent: {
+    color: colors.textPrimary,
+    lineHeight: 20,
+  },
+  ownerReplyMeta: {
+    color: colors.textSecondary,
+    fontSize: 12,
+  },
+  replyActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: 16,
+  },
+  replyLinkText: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  replyDeleteText: {
+    color: colors.danger,
+    fontWeight: '700',
+  },
+  replyEditorCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#d9e7ef',
+    backgroundColor: '#fbfdff',
+    padding: 14,
+    rowGap: 10,
+  },
+  replyEditorTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  replyEditorInput: {
+    minHeight: 90,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#d9e3eb',
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    textAlignVertical: 'top',
+    color: colors.textPrimary,
+  },
+  replyPrimaryButton: {
+    flex: 1,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  replyPrimaryButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  replySecondaryButton: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#d9e3eb',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  replySecondaryButtonText: {
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  reviewErrorCard: {
+    marginTop: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#f7c9c7',
+    backgroundColor: '#fff7f7',
+    padding: 18,
+    rowGap: 8,
+  },
+  reviewErrorTitle: {
+    color: colors.danger,
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  reviewErrorText: {
+    color: colors.textSecondary,
+    lineHeight: 20,
   },
 });

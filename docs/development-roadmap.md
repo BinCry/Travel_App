@@ -1,30 +1,71 @@
 # Development Roadmap
 
-Updated: 2026-05-27
+Updated: 2026-05-29
 
-## Completed in the current hardening wave
+## Thesis-ready scope completed
 
-- thêm xác minh email bắt buộc trước khi đăng nhập
-- thêm resend OTP xác minh
-- thêm xóa tài khoản vĩnh viễn cho traveler và owner
-- thêm rollback đăng ký nếu gửi email xác minh thất bại
-- thêm mail template tiếng Việt có dấu cho xác minh email và đặt lại mật khẩu
-- bỏ runtime fallback avatar ngoài hệ thống ở backend
-- thêm màn `Xác minh email` và `Xóa tài khoản` trên mobile
-- bỏ ảnh URL ngoài ở các màn auth/account chính
-- cập nhật OpenAPI theo flow mới
+### Phase 0: Core stability
 
-## Still recommended before final submission
+- Email verification bắt buộc trước khi dùng app đầy đủ.
+- Resend OTP và reset password bằng OTP.
+- Delete account cho traveler và owner.
+- Request logging, storage verify và OpenAPI generation.
+- Shared Zod contracts cho mobile và backend.
 
-1. Chạy deploy thật lên Coolify/Azure VPS.
-2. Kiểm tra SMTP thật với hộp thư thật.
-3. Kiểm tra Gemini thật với credential production.
-4. Viết thêm DB-backed tests với PostgreSQL thật.
-5. Thêm mobile automated tests và Android E2E flow.
-6. Chạy smoke test end-to-end trên domain thật và bản build Android preview.
+### Phase 1: Traveler experience
 
-## Optional hardening after thesis deadline
+- Explore places theo category.
+- Save/remove favorites.
+- Review CRUD và like review.
+- Trip planner:
+  - trip CRUD
+  - duplicate trip
+  - trip stop CRUD
+  - stop reorder
+- AI Trip Builder:
+  - nhập yêu cầu
+  - lấy suggestion
+  - lưu suggestion thành trip thật
 
-- nâng cấp coverage sâu hơn cho lỗi mạng/timeout mobile
-- dọn tiếp package audit warnings không cần major framework upgrade
-- thêm analytics/log aggregation cho production
+### Phase 2: Owner experience
+
+- Owner place CRUD.
+- Promotion CRUD và toggle active state.
+- Review reply management cho owner.
+- Owner analytics summary trong mobile dashboard.
+
+### Phase 3: Reservation backbone
+
+- Booking option CRUD cho owner.
+- Availability slot CRUD cho owner.
+- Traveler booking create/list/cancel.
+- Owner booking list và status update.
+- Chặn overbook ở backend.
+
+### Phase 4: QA and release hardening
+
+- Integration tests cho auth, owner, trips, bookings, AI.
+- DB-backed tests cho permission và stateful flows.
+- Mobile tests cho auth, profile, trips, bookings, AI builder, owner management.
+- Storage verify cho upload path.
+
+## Current status
+
+Travel App hiện đã đủ mạnh để bảo vệ đồ án với narrative rõ ràng:
+
+1. Traveler khám phá địa điểm.
+2. Traveler lập kế hoạch bằng AI hoặc thủ công.
+3. Traveler đặt chỗ cho trải nghiệm.
+4. Owner vận hành place, promotion và booking.
+5. Owner phản hồi review và theo dõi analytics.
+
+## Remaining work after thesis
+
+Các mục dưới đây là mở rộng sau đồ án, không còn là blocker cho bản release hiện tại:
+
+- Payment integration thật với SePay/VietQR hoặc Stripe.
+- Notification center trong app.
+- Collection, journal, check-in và gamification sâu hơn.
+- Analytics chi tiết hơn theo thời gian.
+- Production deployment với credential thật cho SMTP và Gemini.
+- EAS preview/production build pipeline hoàn chỉnh.

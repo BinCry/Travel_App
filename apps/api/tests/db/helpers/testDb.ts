@@ -15,6 +15,12 @@ const TRUNCATE_SQL = `
     "EmailVerificationOtp",
     "PasswordResetOtp",
     "Promotion",
+    "Booking",
+    "AvailabilitySlot",
+    "BookingOption",
+    "TripStop",
+    "Trip",
+    "ReviewReply",
     "Favorite",
     "ReviewLike",
     "ReviewImage",
@@ -61,6 +67,74 @@ type PromotionFixtureInput = {
   startTime?: string;
   endTime?: string;
   specificTime?: boolean;
+};
+
+type ReviewFixtureInput = {
+  id?: string;
+  placeId: string;
+  userId: number;
+  rating?: number;
+  content?: string;
+};
+
+type ReviewReplyFixtureInput = {
+  id?: string;
+  reviewId: string;
+  ownerId: number;
+  content?: string;
+};
+
+type TripFixtureInput = {
+  id?: string;
+  userId: number;
+  title?: string;
+  destination?: string;
+  startDate?: Date | null;
+  endDate?: Date | null;
+  budget?: string | null;
+  notes?: string | null;
+};
+
+type TripStopFixtureInput = {
+  id?: string;
+  dayNumber?: number;
+  orderIndex?: number;
+  title?: string;
+  location?: string | null;
+  note?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+};
+
+type BookingOptionFixtureInput = {
+  id?: string;
+  placeId: string;
+  title?: string;
+  description?: string | null;
+  priceLabel?: string | null;
+  durationMinutes?: number;
+  maxPartySize?: number;
+  isActive?: boolean;
+};
+
+type AvailabilitySlotFixtureInput = {
+  id?: string;
+  optionId: string;
+  startAt?: Date;
+  endAt?: Date;
+  capacity?: number;
+  isActive?: boolean;
+};
+
+type BookingFixtureInput = {
+  id?: string;
+  placeId: string;
+  optionId: string;
+  slotId: string;
+  travelerId: number;
+  partySize?: number;
+  note?: string | null;
+  status?: "DRAFT" | "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELLED" | "COMPLETED" | "NO_SHOW" | "REFUND_PENDING" | "REFUNDED";
 };
 
 export async function resetDatabase() {
@@ -121,6 +195,106 @@ export async function createPromotionFixture(
       startTime: input.startTime ?? "08:00",
       endTime: input.endTime ?? "20:00",
       specificTime: input.specificTime ?? true,
+    },
+  });
+}
+
+export async function createReviewFixture(input: ReviewFixtureInput) {
+  return prisma.review.create({
+    data: {
+      id: input.id ?? randomUUID(),
+      placeId: input.placeId,
+      userId: input.userId,
+      rating: input.rating ?? 5,
+      content: input.content ?? "Review thử nghiệm",
+    },
+  });
+}
+
+export async function createReviewReplyFixture(input: ReviewReplyFixtureInput) {
+  return prisma.reviewReply.create({
+    data: {
+      id: input.id ?? randomUUID(),
+      reviewId: input.reviewId,
+      ownerId: input.ownerId,
+      content: input.content ?? "Phản hồi thử nghiệm từ chủ địa điểm",
+    },
+  });
+}
+
+export async function createTripFixture(input: TripFixtureInput) {
+  return prisma.trip.create({
+    data: {
+      id: input.id ?? randomUUID(),
+      userId: input.userId,
+      title: input.title ?? "Ke hoach kham pha cuoi tuan",
+      destination: input.destination ?? "Da Nang",
+      startDate: input.startDate ?? new Date("2026-06-01"),
+      endDate: input.endDate ?? new Date("2026-06-03"),
+      budget: input.budget ?? "balanced",
+      notes: input.notes ?? "Uu tien cac dia diem chill va de di chuyen.",
+    },
+  });
+}
+
+export async function createTripStopFixture(
+  tripId: string,
+  input: TripStopFixtureInput = {}
+) {
+  return prisma.tripStop.create({
+    data: {
+      id: input.id ?? randomUUID(),
+      tripId,
+      dayNumber: input.dayNumber ?? 1,
+      orderIndex: input.orderIndex ?? 1,
+      title: input.title ?? "Diem dung thu nghiem",
+      location: input.location ?? "Da Nang",
+      note: input.note ?? null,
+      startTime: input.startTime ?? null,
+      endTime: input.endTime ?? null,
+    },
+  });
+}
+
+export async function createBookingOptionFixture(input: BookingOptionFixtureInput) {
+  return prisma.bookingOption.create({
+    data: {
+      id: input.id ?? randomUUID(),
+      placeId: input.placeId,
+      title: input.title ?? "Ban toi cho 2 nguoi",
+      description: input.description ?? "Option booking thu nghiem",
+      priceLabel: input.priceLabel ?? "350.000đ / bàn",
+      durationMinutes: input.durationMinutes ?? 90,
+      maxPartySize: input.maxPartySize ?? 2,
+      isActive: input.isActive ?? true,
+    },
+  });
+}
+
+export async function createAvailabilitySlotFixture(input: AvailabilitySlotFixtureInput) {
+  return prisma.availabilitySlot.create({
+    data: {
+      id: input.id ?? randomUUID(),
+      optionId: input.optionId,
+      startAt: input.startAt ?? new Date("2026-06-15T11:00:00.000Z"),
+      endAt: input.endAt ?? new Date("2026-06-15T12:30:00.000Z"),
+      capacity: input.capacity ?? 4,
+      isActive: input.isActive ?? true,
+    },
+  });
+}
+
+export async function createBookingFixture(input: BookingFixtureInput) {
+  return prisma.booking.create({
+    data: {
+      id: input.id ?? randomUUID(),
+      placeId: input.placeId,
+      optionId: input.optionId,
+      slotId: input.slotId,
+      travelerId: input.travelerId,
+      partySize: input.partySize ?? 2,
+      note: input.note ?? "Booking thu nghiem",
+      status: input.status ?? "PENDING",
     },
   });
 }

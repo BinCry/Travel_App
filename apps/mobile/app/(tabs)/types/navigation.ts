@@ -26,7 +26,13 @@ export type RootStackParamList = {
   "Delete Account": undefined;
   "Add Location": undefined;
   "Manage Place": { placeId: string };
+  "Manage Bookings": { placeId: string; placeName?: string };
   "Saved Places": undefined;
+  Trips: undefined;
+  "Trip Planner": undefined | { tripId?: string };
+  "AI Trip Builder": undefined | { initialQuery?: string; initialLocation?: string };
+  "Booking Checkout": { placeId: string; placeName?: string };
+  "Booking History": undefined;
   "Your Reviews": undefined;
 };
 

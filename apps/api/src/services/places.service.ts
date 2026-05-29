@@ -8,6 +8,7 @@ import {
   type PlaceListItem,
   type PlaceReview,
 } from "@travel-app/shared/contracts/places";
+import type { OwnerReviewReply } from "@travel-app/shared/contracts/reviews";
 import { prisma } from "../database/client.js";
 import type { Pagination } from "../http/pagination.js";
 import { fromPrismaPlaceCategory, toPrismaPlaceCategory } from "./placeCategory.js";
@@ -72,6 +73,11 @@ export const placesService = {
           include: {
             user: { select: { fullName: true, username: true, avatarUrl: true } },
             images: true,
+            reply: {
+              include: {
+                owner: { select: { fullName: true, username: true } },
+              },
+            },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -81,6 +87,14 @@ export const placesService = {
 
     const reviews = place.reviews.map((r): PlaceReview => {
       const displayName = r.user.fullName || r.user.username || "Khách du lịch";
+      const ownerReply: OwnerReviewReply | null = r.reply
+        ? {
+            id: r.reply.id,
+            ownerName: r.reply.owner.fullName || r.reply.owner.username || "Chu dia diem",
+            content: r.reply.content,
+            date: formatReviewDate(r.reply.createdAt),
+          }
+        : null;
       return placeReviewSchema.parse({
         avatarUrl: r.user.avatarUrl,
         name: displayName,
@@ -88,6 +102,7 @@ export const placesService = {
         content: r.content,
         rating: r.rating,
         imageUrls: r.images.map((img) => img.url),
+        ownerReply,
       });
     });
 

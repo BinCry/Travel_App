@@ -10,6 +10,8 @@ import { reviewsRouter } from "./routes/reviews.routes.js";
 import { uploadsRouter } from "./routes/uploads.routes.js";
 import { ownerRouter } from "./routes/owner.routes.js";
 import { aiRouter } from "./routes/ai.routes.js";
+import { tripsRouter } from "./routes/trips.routes.js";
+import { bookingsRouter } from "./routes/bookings.routes.js";
 import { httpErrorMiddleware } from "./http/errors.js";
 import { sendError } from "./http/responses.js";
 import { env } from "./config/env.js";
@@ -63,6 +65,8 @@ api.use("/reviews", reviewsRouter);
 api.use("/uploads", uploadsRouter);
 api.use("/owner", ownerRouter);
 api.use("/ai", aiRouter);
+api.use("/trips", tripsRouter);
+api.use("/bookings", bookingsRouter);
 app.use("/api/v1", api);
 
 app.get("/health", async (_req, res) => {

@@ -8,6 +8,7 @@ import UserAvatar from '../components/UserAvatar';
 import { RatingStartBar } from '../components/Rating';
 import { PicturesContainer } from '../components/ReviewPicture';
 import { colors } from '../common/colors';
+import { useAuth } from '../context/AuthContext';
 import { toUserMessage } from '../common/errorMessages';
 import type { AppScreenProps } from '../types/navigation';
 import styles from './DetailLocationScreen.styles';
@@ -16,6 +17,7 @@ export default function DetailLocationScreen({
   navigation,
   route,
 }: AppScreenProps<'Detail Location'>) {
+  const { user } = useAuth();
   const placeId = route.params?.placeId as string | undefined;
   const [place, setPlace] = useState<PlaceDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -185,6 +187,40 @@ export default function DetailLocationScreen({
             </Text>
           </View>
 
+          {user?.role !== 'owner' ? (
+            <View style={{ marginHorizontal: 15, marginBottom: 10 }}>
+              <Pressable
+                onPress={() =>
+                  navigation.navigate('Booking Checkout', {
+                    placeId: place.id,
+                    placeName: place.name,
+                  })
+                }
+                style={{
+                  marginTop: 4,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: '#b7e7f3',
+                  backgroundColor: '#f3fbfe',
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 16,
+                }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 21, fontWeight: '700', color: colors.textPrimary }}>
+                    Đặt chỗ ngay trên app
+                  </Text>
+                  <Text style={{ marginTop: 6, color: colors.textSecondary, lineHeight: 21 }}>
+                    Chọn slot còn chỗ, gửi booking và theo dõi trạng thái xác nhận từ owner.
+                  </Text>
+                </View>
+                <Ionicons name="calendar-outline" size={28} color={colors.primary} />
+              </Pressable>
+            </View>
+          ) : null}
+
           {firstReview ? (
             <View style={{ flexDirection: 'column', margin: 15 }}>
               <View style={{ flexDirection: 'row', marginTop: 10 }}>
@@ -220,6 +256,27 @@ export default function DetailLocationScreen({
                 </View>
                 <RatingStartBar ratingValue={firstReview.rating} size={20} />
                 <Text style={{ marginLeft: 5 }}>{firstReview.content}</Text>
+                {firstReview.ownerReply ? (
+                  <View
+                    style={{
+                      borderRadius: 14,
+                      backgroundColor: '#eef8fb',
+                      borderWidth: 1,
+                      borderColor: '#d6edf5',
+                      padding: 12,
+                      rowGap: 4,
+                    }}>
+                    <Text style={{ color: colors.primary, fontWeight: '700' }}>
+                      Phản hồi từ {firstReview.ownerReply.ownerName}
+                    </Text>
+                    <Text style={{ color: colors.textPrimary, lineHeight: 20 }}>
+                      {firstReview.ownerReply.content}
+                    </Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                      {firstReview.ownerReply.date}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
             </View>
           ) : (

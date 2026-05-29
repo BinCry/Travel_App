@@ -27,6 +27,8 @@ export type {
   UpdateMeRequest,
 } from '@travel-app/shared/contracts/users';
 export type {
+  OwnerAnalyticsSummary,
+  OwnerAnalyticsTopPlace,
   OwnerPlace,
   OwnerPlaceDetail,
   OwnerPlaceCreateRequest,
@@ -43,11 +45,37 @@ export type {
   PlaceReview,
 } from '@travel-app/shared/contracts/places';
 export type {
+  OwnerPlaceReview,
+  OwnerReviewReply,
+  OwnerReviewReplyUpsertRequest,
   ReviewCreateRequest,
   ReviewLikeToggleResponse,
   ReviewListItem,
   ReviewUpdateRequest,
   UserReviewListItem,
 } from '@travel-app/shared/contracts/reviews';
+export type {
+  AvailabilitySlot,
+  AvailabilitySlotCreateRequest,
+  AvailabilitySlotUpdateRequest,
+  BookingCreateRequest,
+  BookingOption,
+  BookingOptionCreateRequest,
+  BookingOptionUpdateRequest,
+  BookingStatus,
+  OwnerBookingStatusUpdateRequest,
+  OwnerPlaceBooking,
+  TravelerBooking,
+} from '@travel-app/shared/contracts/bookings';
+export type {
+  TripBudget,
+  TripCreateRequest,
+  TripDetail,
+  TripListItem,
+  TripStop,
+  TripStopCreateRequest,
+  TripStopUpdateRequest,
+  TripUpdateRequest,
+} from '@travel-app/shared/contracts/trips';
 export type { TripPlanRequest, TripPlanResponse } from '@travel-app/shared/contracts/ai';
 export type { UploadResponse } from '@travel-app/shared/contracts/uploads';

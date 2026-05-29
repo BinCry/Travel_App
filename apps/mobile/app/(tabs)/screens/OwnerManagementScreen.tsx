@@ -10,8 +10,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { fetchOwnerPlaces } from '../../../lib/api/owner';
+import {
+  fetchOwnerAnalyticsSummary,
+  fetchOwnerPlaces,
+} from '../../../lib/api/owner';
 import type { OwnerPlace } from '../../../lib/api/owner';
+import type { OwnerAnalyticsSummary } from '../../../lib/api/types';
 import { colors } from '../common/colors';
 import { toUserMessage } from '../common/errorMessages';
 import type { AppNavigationOnlyProps } from '../types/navigation';
@@ -31,7 +35,10 @@ function renderPlace(item: OwnerPlace, onEdit: (item: OwnerPlace) => void) {
           {item.location}
         </Text>
         <View style={[styles.buttonRow, { justifyContent: 'flex-end' }]}>
-          <TouchableOpacity style={styles.btnEdit} onPress={() => onEdit(item)}>
+          <TouchableOpacity
+            testID={`edit-owner-place-${item.id}`}
+            style={styles.btnEdit}
+            onPress={() => onEdit(item)}>
             <Ionicons name="pencil" size={14} color="#212121" />
             <Text style={styles.btnEditText}>Sửa</Text>
           </TouchableOpacity>
@@ -45,17 +52,23 @@ export default function OwnerManagementScreen({
   navigation,
 }: AppNavigationOnlyProps<'Manage'>) {
   const [places, setPlaces] = useState<OwnerPlace[]>([]);
+  const [analytics, setAnalytics] = useState<OwnerAnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadPlaces = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchOwnerPlaces();
-      setPlaces(data);
+      const [placeData, analyticsData] = await Promise.all([
+        fetchOwnerPlaces(),
+        fetchOwnerAnalyticsSummary(),
+      ]);
+      setPlaces(placeData);
+      setAnalytics(analyticsData);
       setLoadError(null);
     } catch (error) {
       setPlaces([]);
+      setAnalytics(null);
       setLoadError(toUserMessage(error));
     } finally {
       setLoading(false);
@@ -91,7 +104,7 @@ export default function OwnerManagementScreen({
               Quản lý địa điểm
             </Text>
             <Text style={[styles.linkText, { color: '#90a4ae' }]} numberOfLines={2}>
-              Theo dõi địa điểm và ưu đãi của bạn
+              Theo dõi địa điểm, ưu đãi, booking và hiệu quả hoạt động của bạn
             </Text>
           </View>
         </View>
@@ -105,6 +118,112 @@ export default function OwnerManagementScreen({
           <Text style={styles.buttonText}>+ Thêm địa điểm mới</Text>
         </TouchableOpacity>
       </View>
+
+      {analytics ? (
+        <View style={{ marginHorizontal: 15, marginTop: 16, rowGap: 14 }}>
+          <View
+            style={{
+              borderRadius: 20,
+              backgroundColor: '#ffffff',
+              padding: 18,
+              borderWidth: 1,
+              borderColor: '#e5edf4',
+            }}>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: colors.textPrimary }}>
+              Tổng quan nhanh
+            </Text>
+            <View
+              style={{
+                marginTop: 14,
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: 10,
+              }}>
+              {[
+                { label: 'Địa điểm', value: analytics.placeCount, tone: '#e0f2fe', color: '#0369a1' },
+                { label: 'Booking', value: analytics.totalBookingCount, tone: '#fef3c7', color: '#92400e' },
+                { label: 'Đang chờ', value: analytics.pendingBookingCount, tone: '#ffedd5', color: '#c2410c' },
+                { label: 'Đã xác nhận', value: analytics.confirmedBookingCount, tone: '#dcfce7', color: '#166534' },
+                { label: 'Đánh giá', value: analytics.reviewCount, tone: '#ede9fe', color: '#5b21b6' },
+                { label: 'Yêu thích', value: analytics.favoriteCount, tone: '#fee2e2', color: '#be123c' },
+              ].map((item) => (
+                <View
+                  key={item.label}
+                  style={{
+                    minWidth: '30%',
+                    flexGrow: 1,
+                    borderRadius: 16,
+                    backgroundColor: item.tone,
+                    padding: 14,
+                  }}>
+                  <Text style={{ color: item.color, fontWeight: '800', fontSize: 20 }}>
+                    {item.value}
+                  </Text>
+                  <Text style={{ color: item.color, marginTop: 4, fontWeight: '600' }}>
+                    {item.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <View
+              style={{
+                marginTop: 14,
+                borderRadius: 16,
+                backgroundColor: '#f8fbfd',
+                padding: 14,
+              }}>
+              <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>
+                Rating trung bình: {analytics.averageRating.toFixed(2)}
+              </Text>
+              <Text style={{ marginTop: 6, color: colors.textSecondary }}>
+                Ưu đãi đang bật: {analytics.activePromotionCount} • Booking hoàn tất:{' '}
+                {analytics.completedBookingCount}
+              </Text>
+            </View>
+          </View>
+
+          {analytics.topPlaces.length ? (
+            <View
+              testID="owner-analytics-summary"
+              style={{
+                borderRadius: 20,
+                backgroundColor: '#ffffff',
+                padding: 18,
+                borderWidth: 1,
+                borderColor: '#e5edf4',
+              }}>
+              <Text style={{ fontSize: 20, fontWeight: '800', color: colors.textPrimary }}>
+                Địa điểm nổi bật
+              </Text>
+              <View style={{ marginTop: 12, rowGap: 12 }}>
+                {analytics.topPlaces.map((item) => (
+                  <Pressable
+                    testID={`owner-top-place-${item.placeId}`}
+                    key={item.placeId}
+                    onPress={() => navigation.navigate('Manage Place', { placeId: item.placeId })}
+                    style={{
+                      borderRadius: 16,
+                      backgroundColor: '#f8fbfd',
+                      padding: 14,
+                    }}>
+                    <Text style={{ fontSize: 17, fontWeight: '800', color: colors.textPrimary }}>
+                      {item.placeName}
+                    </Text>
+                    <Text style={{ marginTop: 6, color: colors.textSecondary, lineHeight: 20 }}>
+                      {item.bookingCount} booking • {item.reviewCount} review • {item.favoriteCount}{' '}
+                      lượt lưu
+                    </Text>
+                    <Text style={{ marginTop: 4, color: colors.textSecondary }}>
+                      Rating {item.averageRating.toFixed(2)} • {item.activePromotionCount} ưu đãi đang bật
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 

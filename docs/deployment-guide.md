@@ -1,52 +1,21 @@
 # Hướng dẫn deploy Travel App
 
-Cập nhật: 2026-05-28
+Cập nhật: 2026-05-29
 
 ## Mục tiêu deploy
 
-- Backend chạy trên `Azure VPS`
-- Quản lý deploy bằng `Coolify`
-- Database dùng `Azure Database for PostgreSQL`
-- Ảnh upload lưu trong volume local bền vững của VPS
-- Mobile build APK nội bộ bằng `EAS`
+- Backend chạy trên `Azure VPS`.
+- Quản lý deploy bằng `Coolify`.
+- Database dùng `Azure Database for PostgreSQL`.
+- Upload lưu ở persistent volume.
+- Mobile build bằng `EAS`.
 
-## Chiến lược branch
+## Branch strategy
 
-- `main`: nhánh phát triển chính
-- `deploy`: nhánh được Coolify theo dõi
+- `main`: nhánh phát triển chính.
+- `deploy`: nhánh backend production nếu vẫn dùng flow Coolify hiện tại.
 
-Quy tắc:
-
-1. dev push lên `main`
-2. GitHub Actions chạy toàn bộ kiểm tra
-3. nếu pass, workflow `Promote Deploy` force-sync `main -> deploy`
-4. Coolify redeploy từ nhánh `deploy`
-
-## GitHub Actions đã có
-
-- `.github/workflows/ci.yml`
-  - `verify:api`
-  - `verify:mobile`
-  - `verify:storage`
-  - `verify:api:db` với PostgreSQL thật trong service CI
-  - `test:mobile`
-- `.github/workflows/promote-deploy.yml`
-  - chỉ chạy khi `CI` pass trên `main`
-  - đồng bộ commit đã pass sang `deploy`
-
-## Backend trên Coolify
-
-### Thiết lập service
-
-- Build source: GitHub repo
-- Branch: `deploy`
-- Build context: repo root
-- Dockerfile: `apps/api/Dockerfile`
-- Port: `3000`
-- Health endpoint: `/health`
-- Volume persistent: mount vào `/app/uploads`
-
-### Biến môi trường backend
+## Backend environment variables
 
 ```env
 APP_NAME=Travel App
@@ -71,83 +40,111 @@ TRUST_PROXY=true
 ALLOWED_ORIGINS=
 ```
 
-### Ghi chú Azure PostgreSQL
+## Coolify service
 
-- bắt buộc dùng connection string có `sslmode=require`
-- `DATABASE_URL` và `DIRECT_URL` hiện đang dùng cùng một server Azure PostgreSQL
-- nếu firewall Azure chưa mở, app sẽ fail ở `/health`
+- Build source: GitHub repo
+- Branch: `deploy`
+- Build context: repo root
+- Dockerfile: `apps/api/Dockerfile`
+- Port: `3000`
+- Health endpoint: `/health`
+- Upload volume: mount vào `/app/uploads`
 
-## Luồng deploy backend
+## Database notes
 
-1. Tạo service trong Coolify từ repo GitHub.
-2. Chọn nhánh `deploy`.
-3. Khai báo đầy đủ env backend.
-4. Mount volume ghi được vào `/app/uploads`.
-5. Deploy lần đầu.
-6. Container tự chạy `prisma migrate deploy` trước khi start API.
-7. Nếu cần dữ liệu demo cho đội test:
+- Production PostgreSQL phải dùng `sslmode=require`.
+- Local dev hiện có thể sync schema bằng `npm --prefix apps/api run db:push`.
+- Production phải dùng `npm --prefix apps/api run db:migrate:deploy`.
+
+## Release commands
+
+### Backend verification
 
 ```bash
-npm run db:seed
+npm run verify:api
+npm run verify:storage
+```
+
+### DB-backed verification
+
+```bash
+npm --prefix apps/api run test:db -- --run tests/db/bookings.db.test.ts tests/db/owner.db.test.ts tests/db/trips.db.test.ts
+```
+
+### Mobile verification
+
+```bash
+npm run verify:mobile
+npm run test:mobile
 ```
 
 ## Smoke test sau deploy
 
-### Bắt buộc
+### Auth
 
-- đăng ký traveler
-- nhận email OTP xác minh
-- xác minh email thành công
-- đăng nhập thành công
-- quên mật khẩu và đặt lại mật khẩu thành công
-- chỉnh hồ sơ và upload avatar thành công
-- owner tạo / sửa / xóa địa điểm thành công
-- owner tạo / sửa / bật tắt / xóa ưu đãi thành công
-- AI trip plan trả dữ liệu thật từ Gemini
-- `/health` trả `200`
+- Đăng ký traveler.
+- Nhận OTP email và xác minh thành công.
+- Đăng nhập thành công.
+- Quên mật khẩu và đặt lại mật khẩu thành công.
 
-### Kiểm tra bền vững
+### Traveler flow
 
-- restart container xong ảnh upload vẫn truy cập được
-- xóa owner xong dữ liệu place / promotion không còn
-- token sai hoặc hết hạn trả lỗi đúng
+- Xem danh sách địa điểm và vào chi tiết.
+- Lưu một địa điểm yêu thích.
+- Tạo một review.
+- Tạo trip thủ công.
+- Tạo trip bằng AI và lưu vào tài khoản.
+- Tạo booking và xem booking history.
+- Hủy booking vừa tạo.
 
-## Build mobile cho APK nội bộ
+### Owner flow
 
-### Biến môi trường mobile
+- Đăng nhập owner.
+- Tạo place mới.
+- Tạo promotion mới.
+- Tạo booking option và availability slot.
+- Xem booking của place.
+- Đổi trạng thái booking.
+- Tạo owner reply cho review.
+- Xem analytics summary ở owner dashboard.
+
+### System checks
+
+- `/health` trả `200`.
+- Upload avatar hoặc place image thành công.
+- Restart container xong ảnh upload vẫn truy cập được.
+
+## Mobile build
+
+### Mobile env
 
 ```env
 EXPO_PUBLIC_API_BASE_URL=https://your-api-domain.example.com
 ```
 
-### Lệnh build
+### Build Android preview
 
 ```bash
 npx eas build --platform android --profile preview
 ```
 
-### Lưu ý
-
-- profile `preview` xuất APK để test nội bộ
-- profile `production` xuất AAB cho giai đoạn phát hành sau
-- `android.package` hiện còn dùng package tạm cho APK nội bộ, cần đổi trước khi lên Google Play thật
-
 ## Rollback
 
-### Backend
+### Code rollback
 
-1. checkout commit ổn định gần nhất
-2. push commit đó lên `main`
-3. chờ `Promote Deploy` đồng bộ lại sang `deploy`
-4. Coolify tự redeploy
+1. Checkout commit ổn định gần nhất.
+2. Push lại lên `main`.
+3. Đồng bộ lại sang `deploy`.
+4. Chờ Coolify redeploy.
 
-### Nếu cần rollback ngay trong GitHub
+### Database rollback
 
-- force-push `deploy` về commit ổn định gần nhất
-- sau đó xử lý lại `main` để lịch sử không lệch
+- Chỉ rollback migration nếu có kế hoạch dữ liệu rõ ràng.
+- Với migration mới liên quan `trips`, `review replies`, `bookings`, cần backup database trước khi rollback.
 
 ## Tài liệu liên quan
 
-- `apps/api/docs/deploy-azure-coolify.md`
-- `apps/mobile/README.md`
+- `docs/codebase-summary.md`
 - `docs/system-architecture.md`
+- `docs/feature-permission-matrix.md`
+- `docs/demo-script.md`

@@ -70,6 +70,29 @@ export const ownerPlaceDetailSchema = ownerPlaceSchema.extend({
   promotions: z.array(promotionItemSchema),
 });
 
+export const ownerAnalyticsTopPlaceSchema = z.object({
+  placeId: z.string(),
+  placeName: z.string(),
+  bookingCount: z.number().int().nonnegative(),
+  reviewCount: z.number().int().nonnegative(),
+  favoriteCount: z.number().int().nonnegative(),
+  activePromotionCount: z.number().int().nonnegative(),
+  averageRating: z.number().nonnegative(),
+});
+
+export const ownerAnalyticsSummarySchema = z.object({
+  placeCount: z.number().int().nonnegative(),
+  activePromotionCount: z.number().int().nonnegative(),
+  totalBookingCount: z.number().int().nonnegative(),
+  pendingBookingCount: z.number().int().nonnegative(),
+  confirmedBookingCount: z.number().int().nonnegative(),
+  completedBookingCount: z.number().int().nonnegative(),
+  reviewCount: z.number().int().nonnegative(),
+  favoriteCount: z.number().int().nonnegative(),
+  averageRating: z.number().nonnegative(),
+  topPlaces: z.array(ownerAnalyticsTopPlaceSchema),
+});
+
 export type PromotionItem = z.infer<typeof promotionItemSchema>;
 export type PromotionScheduleInput = z.infer<typeof promotionScheduleInputSchema>;
 export type PromotionSchedule = z.infer<typeof promotionScheduleSchema>;
@@ -79,3 +102,5 @@ export type OwnerPlace = z.infer<typeof ownerPlaceSchema>;
 export type OwnerPlaceCreateRequest = z.infer<typeof ownerPlaceCreateRequestSchema>;
 export type OwnerPlaceUpdateRequest = z.infer<typeof ownerPlaceUpdateRequestSchema>;
 export type OwnerPlaceDetail = z.infer<typeof ownerPlaceDetailSchema>;
+export type OwnerAnalyticsTopPlace = z.infer<typeof ownerAnalyticsTopPlaceSchema>;
+export type OwnerAnalyticsSummary = z.infer<typeof ownerAnalyticsSummarySchema>;

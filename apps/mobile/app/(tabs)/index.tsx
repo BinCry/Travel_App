@@ -1,4 +1,7 @@
 import AddLocationScreen from './screens/AddLocationScreen';
+import AiTripBuilderScreen from './screens/AiTripBuilderScreen';
+import BookingCheckoutScreen from './screens/BookingCheckoutScreen';
+import BookingHistoryScreen from './screens/BookingHistoryScreen';
 import ChangePasswordScreen from './screens/ChangePasswordScreen';
 import DetailLocationScreen from './screens/DetailLocationScreen';
 import DeleteAccountScreen from './screens/DeleteAccountScreen';
@@ -7,12 +10,15 @@ import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import LogoutScreen from './screens/LogoutScreen';
+import ManageBookingsScreen from './screens/ManageBookingsScreen';
 import ManagePlaceScreen from './screens/ManagePlaceScreen';
 import OwnerManagementScreen from './screens/OwnerManagementScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import SavedPlacesScreen from './screens/SavedPlacesScreen';
 import TermsScreen from './screens/TermsScreen';
+import TripPlannerScreen from './screens/TripPlannerScreen';
+import TripsScreen from './screens/TripsScreen';
 import UserReviewsScreen from './screens/UserReviewsScreen';
 import VerifyEmailScreen from './screens/VerifyEmailScreen';
 import ViewReviewsScreen from './screens/ViewReviewsScreen';
@@ -115,6 +121,28 @@ const AuthenticatedStack = ({ isOwner }: { isOwner: boolean }) => (
       options={{ headerShown: false }}
     />
     <Stack.Screen
+      name="Booking Checkout"
+      component={BookingCheckoutScreen}
+      options={{
+        headerShown: true,
+        title: 'Đặt chỗ',
+        headerStyle: { backgroundColor: '#FFFFFF' },
+        headerShadowVisible: false,
+        headerTintColor: '#000',
+      }}
+    />
+    <Stack.Screen
+      name="Booking History"
+      component={BookingHistoryScreen}
+      options={{
+        headerShown: true,
+        title: 'Lịch đặt chỗ',
+        headerStyle: { backgroundColor: '#FFFFFF' },
+        headerShadowVisible: false,
+        headerTintColor: '#000',
+      }}
+    />
+    <Stack.Screen
       name="All Reviews"
       component={ViewReviewsScreen}
       options={{ headerShown: false }}
@@ -123,6 +151,39 @@ const AuthenticatedStack = ({ isOwner }: { isOwner: boolean }) => (
       name="Saved Places"
       component={SavedPlacesScreen}
       options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="Trips"
+      component={TripsScreen}
+      options={{
+        headerShown: true,
+        title: 'Hành trình của bạn',
+        headerStyle: { backgroundColor: '#FFFFFF' },
+        headerShadowVisible: false,
+        headerTintColor: '#000',
+      }}
+    />
+    <Stack.Screen
+      name="Trip Planner"
+      component={TripPlannerScreen}
+      options={{
+        headerShown: true,
+        title: 'Chi tiết hành trình',
+        headerStyle: { backgroundColor: '#FFFFFF' },
+        headerShadowVisible: false,
+        headerTintColor: '#000',
+      }}
+    />
+    <Stack.Screen
+      name="AI Trip Builder"
+      component={AiTripBuilderScreen}
+      options={{
+        headerShown: true,
+        title: 'AI Trip Builder',
+        headerStyle: { backgroundColor: '#FFFFFF' },
+        headerShadowVisible: false,
+        headerTintColor: '#000',
+      }}
     />
     <Stack.Screen
       name="Your Reviews"
@@ -140,6 +201,17 @@ const AuthenticatedStack = ({ isOwner }: { isOwner: boolean }) => (
           name="Manage Place"
           component={ManagePlaceScreen}
           options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Manage Bookings"
+          component={ManageBookingsScreen}
+          options={{
+            headerShown: true,
+            title: 'Quản lý booking',
+            headerStyle: { backgroundColor: '#FFFFFF' },
+            headerShadowVisible: false,
+            headerTintColor: '#000',
+          }}
         />
       </>
     ) : null}

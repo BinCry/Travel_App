@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   type ImageSourcePropType,
@@ -11,7 +10,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { planTrip } from '../../../lib/api/ai';
 import { fetchPlaces } from '../../../lib/api/places';
 import type { PlaceCategory, PlaceListItem } from '../../../lib/api/types';
 import { colors } from '../common/colors';
@@ -104,7 +102,6 @@ export default function HomeScreen({ navigation }: AppNavigationOnlyProps<'Home'
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
 
   const loadPlaces = useCallback(async () => {
     setLoading(true);
@@ -123,22 +120,6 @@ export default function HomeScreen({ navigation }: AppNavigationOnlyProps<'Home'
   useEffect(() => {
     void loadPlaces();
   }, [loadPlaces]);
-
-  const handlePlanWithAi = async () => {
-    const q = searchQuery.trim() || 'chuyến đi cuối tuần';
-    setAiLoading(true);
-    try {
-      const plan = await planTrip(q, 'Gần bạn');
-      const body = plan.suggestions
-        .map((suggestion, index) => `${index + 1}. ${suggestion.title}\n${suggestion.description}`)
-        .join('\n\n');
-      Alert.alert('Gợi ý chuyến đi', `${body}\n\n${plan.note}`);
-    } catch (error) {
-      Alert.alert('Lỗi', toUserMessage(error));
-    } finally {
-      setAiLoading(false);
-    }
-  };
 
   const renderPlaceItem = useCallback(
     ({ item }: { item: Place }) => renderPlaceCard(item, navigation),
@@ -249,8 +230,12 @@ export default function HomeScreen({ navigation }: AppNavigationOnlyProps<'Home'
       <View style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'center' }}>
         <Pressable
           style={[styles.aiCard, { flex: 1 }]}
-          onPress={handlePlanWithAi}
-          disabled={aiLoading}>
+          onPress={() =>
+            navigation.navigate('AI Trip Builder', {
+              initialQuery: searchQuery.trim() || 'chuyến đi cuối tuần',
+              initialLocation: 'Gần bạn',
+            })
+          }>
           <View style={styles.aiCardContent}>
             <Image
               source={require('../../../assets/images/AIPlan-icon.png')}
@@ -258,7 +243,7 @@ export default function HomeScreen({ navigation }: AppNavigationOnlyProps<'Home'
             />
             <View style={styles.aiCardTextBlock}>
               <Text style={styles.aiCardTitle} numberOfLines={1}>
-                {aiLoading ? 'Đang tạo gợi ý...' : 'Lên kế hoạch với AI'}
+                Lên kế hoạch với AI
               </Text>
               <Text style={styles.aiCardSubtitle} numberOfLines={2}>
                 Nhận gợi ý hành trình phù hợp với nhu cầu của bạn

@@ -15,6 +15,12 @@ async function main() {
   const verifiedAt = new Date();
 
   await prisma.promotion.deleteMany();
+  await prisma.booking.deleteMany();
+  await prisma.availabilitySlot.deleteMany();
+  await prisma.bookingOption.deleteMany();
+  await prisma.tripStop.deleteMany();
+  await prisma.trip.deleteMany();
+  await prisma.reviewReply.deleteMany();
   await prisma.reviewLike.deleteMany();
   await prisma.reviewImage.deleteMany();
   await prisma.review.deleteMany();
@@ -77,6 +83,14 @@ async function main() {
     },
   });
 
+  await prisma.reviewReply.create({
+    data: {
+      reviewId: review.id,
+      ownerId: owner.id,
+      content: "Cam on ban da ghe tham. Ben minh rat vui khi Gion dem lai trai nghiem nhe nhang cho chuyen di cua ban.",
+    },
+  });
+
   await prisma.reviewImage.createMany({
     data: [
       {
@@ -131,6 +145,83 @@ async function main() {
         specificTime: true,
       },
     ],
+  });
+
+  const dinnerOption = await prisma.bookingOption.create({
+    data: {
+      placeId: secondPlace.id,
+      title: "Ban toi cho 2 nguoi",
+      description: "Khung gio phu hop cho bua toi nhe nhang va thoai mai.",
+      priceLabel: "350.000đ / bàn",
+      durationMinutes: 90,
+      maxPartySize: 2,
+      isActive: true,
+    },
+  });
+
+  const dinnerSlot = await prisma.availabilitySlot.create({
+    data: {
+      optionId: dinnerOption.id,
+      startAt: new Date("2026-06-15T11:00:00.000Z"),
+      endAt: new Date("2026-06-15T12:30:00.000Z"),
+      capacity: 6,
+      isActive: true,
+    },
+  });
+
+  await prisma.booking.create({
+    data: {
+      placeId: secondPlace.id,
+      optionId: dinnerOption.id,
+      slotId: dinnerSlot.id,
+      travelerId: traveler.id,
+      partySize: 2,
+      note: "Ban gan cua so neu con cho",
+      status: "CONFIRMED",
+    },
+  });
+
+  await prisma.trip.create({
+    data: {
+      userId: traveler.id,
+      title: "Kyoto thu gian cuoi tuan",
+      destination: "Kyoto, Nhat Ban",
+      startDate: new Date("2026-06-12"),
+      endDate: new Date("2026-06-14"),
+      budget: "balanced",
+      notes: "Uu tien dia diem yen tinh, di bo nhe va co thoi gian chup anh.",
+      stops: {
+        create: [
+          {
+            dayNumber: 1,
+            orderIndex: 1,
+            title: "Check-in khach san",
+            location: "Khu trung tam Kyoto",
+            note: "Nhan phong truoc 15:00",
+            startTime: "14:00",
+            endTime: "15:00",
+          },
+          {
+            dayNumber: 1,
+            orderIndex: 2,
+            title: "Dao Gion District",
+            location: "Kyoto, Nhat Ban",
+            note: "Di bo va chup anh luc hoang hon",
+            startTime: "16:30",
+            endTime: "18:30",
+          },
+          {
+            dayNumber: 2,
+            orderIndex: 1,
+            title: "An toi tai Happy Restaurant",
+            location: "Tokyo, Nhat Ban",
+            note: "Dat ban cho 2 nguoi",
+            startTime: "18:00",
+            endTime: "20:00",
+          },
+        ],
+      },
+    },
   });
 
   console.info("Đã nạp dữ liệu mẫu thành công.");

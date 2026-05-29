@@ -93,6 +93,36 @@ export default function ProfileScreen({ navigation }: AppNavigationOnlyProps<'Pr
 
           <TouchableOpacity
             style={styles.profileMenuItemContainer}
+            onPress={() => navigation.navigate('Trips')}>
+            <View style={[styles.profileMenuItemIcon, { backgroundColor: '#dff5ff' }]}>
+              <Ionicons name="airplane-outline" size={28} color="#00AEEF" />
+            </View>
+            <View style={styles.profileMenuTextContainer}>
+              <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Hành trình của bạn</Text>
+              <Text style={{ color: '#928d8d', fontSize: 15 }}>
+                Tạo kế hoạch đi chơi, chia ngày và sắp xếp điểm dừng
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.profileMenuItemContainer}
+            onPress={() => navigation.navigate('Booking History')}>
+            <View style={[styles.profileMenuItemIcon, { backgroundColor: '#fef3c7' }]}>
+              <Ionicons name="calendar-outline" size={28} color="#d97706" />
+            </View>
+            <View style={styles.profileMenuTextContainer}>
+              <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Lịch đặt chỗ</Text>
+              <Text style={{ color: '#928d8d', fontSize: 15 }}>
+                Theo dõi trạng thái booking và hủy nhanh khi cần
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.profileMenuItemContainer}
             onPress={() => navigation.navigate('Your Reviews')}>
             <View style={[styles.profileMenuItemIcon, { backgroundColor: '#daf7b5' }]}>
               <MaterialIcons name="rate-review" size={28} color="#a4c626" />

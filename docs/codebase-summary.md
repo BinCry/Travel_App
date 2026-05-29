@@ -1,202 +1,157 @@
 # Tóm tắt codebase Travel App
 
-Cập nhật: 2026-05-28
+Cập nhật: 2026-05-29
+
+## Mục tiêu sản phẩm
+
+Travel App là ứng dụng khám phá du lịch trên mobile với 2 vai trò công khai:
+
+- `traveler`: khám phá địa điểm, lưu yêu thích, viết review, lập hành trình, dùng AI và đặt chỗ.
+- `owner`: có toàn bộ quyền của traveler và thêm quyền quản lý địa điểm, ưu đãi, booking, phản hồi review và xem analytics.
+
+Phạm vi hiện tại đã đủ để demo đồ án theo hướng `travel discovery + trip planning + reservation + owner growth`.
 
 ## Cấu trúc monorepo
 
-- `apps/api`: backend Express + TypeScript + Prisma
-- `apps/mobile`: ứng dụng Expo / React Native
-- `packages/shared`: shared contracts bằng Zod, response envelope, error code
+- `apps/api`: backend Express + TypeScript + Prisma.
+- `apps/mobile`: ứng dụng Expo / React Native.
+- `packages/shared`: shared contracts bằng Zod, response envelope, error code và type dùng chung.
 
-## Mức độ hoàn thiện hiện tại
+## Tính năng đã hoàn thiện
 
-- Backend nghiệp vụ cốt lõi: `85%`
-- Mobile luồng chính: `80%`
-- Phân quyền và xử lý lỗi người dùng: `80%`
-- QA tự động: `65%`
-- Đường deploy Azure VPS + Coolify: `80%`
-- APK nội bộ: `85%`
-- Play Store readiness: `60%`
+### Anonymous
 
-## Tính năng backend đã có
-
-### `auth`
-
-- đăng ký tài khoản `traveler` hoặc `owner`
-- gửi OTP xác minh email
-- xác minh email và cấp JWT
-- gửi lại OTP xác minh
-- đăng nhập email / mật khẩu
-- quên mật khẩu bằng OTP email
-- đặt lại mật khẩu
-
-### `users`
-
-- xem hồ sơ hiện tại
-- cập nhật hồ sơ
-- đổi mật khẩu
-- xóa tài khoản vĩnh viễn
-- xem review của chính mình
-- xem danh sách địa điểm đã lưu
-
-### `places`
-
-- danh sách địa điểm công khai
-- lọc theo danh mục chuẩn
-- xem chi tiết địa điểm
-- xem danh sách review theo địa điểm
-
-### `reviews`
-
-- tạo review
-- sửa / xóa review của chính mình
-- thích / bỏ thích review
-
-### `favorites`
-
-- thêm / xóa địa điểm yêu thích
-- lấy danh sách địa điểm đã lưu
-
-### `owner`
-
-- xem danh sách địa điểm của owner
-- tạo / sửa / xóa địa điểm của owner
-- tạo / sửa / bật tắt / xóa ưu đãi của owner
-
-### `uploads`
-
-- upload ảnh review
-- upload ảnh bìa địa điểm
-- upload ảnh đại diện
-
-### `ai`
-
-- gợi ý kế hoạch du lịch bằng Gemini
-
-### `health`
-
-- kiểm tra kết nối PostgreSQL
-- kiểm tra quyền ghi thư mục upload
-
-## Tính năng mobile đã có
-
-### Người dùng chưa đăng nhập
-
-- đăng nhập
-- đăng ký
-- chọn loại tài khoản `traveler` hoặc `owner`
-- xem điều khoản sử dụng
-- xác minh email
-- quên mật khẩu
+- Xem danh sách địa điểm công khai.
+- Xem chi tiết địa điểm và review công khai.
+- Không có quyền mutation.
 
 ### Traveler
 
-- duyệt địa điểm
-- xem chi tiết địa điểm
-- lưu / bỏ lưu địa điểm
-- viết review
-- xem review của chính mình
-- chỉnh sửa hồ sơ
-- đổi mật khẩu
-- xóa tài khoản
-- đăng xuất
-- nhận gợi ý hành trình bằng AI
+- Đăng ký, xác minh email bằng OTP, đăng nhập, quên mật khẩu, đổi mật khẩu, xóa tài khoản.
+- Xem và cập nhật hồ sơ cá nhân, avatar.
+- Duyệt địa điểm theo danh mục `attractions | dining | festivals`.
+- Lưu và bỏ lưu địa điểm yêu thích.
+- Tạo, sửa, xóa review của chính mình.
+- Xem danh sách review đã viết.
+- Tạo hành trình thủ công:
+  - tạo, sửa, xóa, nhân bản trip
+  - thêm, sửa, xóa, sắp xếp lại trip stop
+- Tạo hành trình bằng AI:
+  - nhập nhu cầu chuyến đi
+  - nhận suggestion từ Gemini
+  - lưu suggestion thành trip thật trong hệ thống
+- Đặt chỗ:
+  - xem booking option và availability slot của địa điểm
+  - tạo booking
+  - xem lịch sử booking
+  - hủy booking khi còn hợp lệ
 
 ### Owner
 
-- có toàn bộ quyền của traveler
-- thêm địa điểm
-- sửa / xóa địa điểm của mình
-- tạo / sửa / tắt / xóa ưu đãi
+- Có toàn bộ quyền của traveler.
+- Quản lý địa điểm thuộc sở hữu của mình:
+  - tạo, sửa, xóa place
+  - cập nhật ảnh bìa, thông tin mô tả
+- Quản lý promotion:
+  - tạo, sửa, bật/tắt, xóa ưu đãi
+- Quản lý review:
+  - xem review theo place
+  - tạo, sửa, xóa phản hồi owner cho review
+- Quản lý booking:
+  - tạo, sửa, xóa booking option
+  - tạo, sửa, xóa availability slot
+  - xem booking theo place
+  - đổi trạng thái booking
+- Xem analytics tổng quan:
+  - số lượng place
+  - promotion đang bật
+  - booking theo trạng thái
+  - review, favorite, average rating
+  - top places nổi bật
 
-## Phân quyền hiện tại
+## Domain backend hiện có
 
-### `anonymous`
+- `auth`: register, login, verify email OTP, resend OTP, forgot/reset password.
+- `users`: profile, password change, delete account, self review list, saved places.
+- `places`: place list, place detail, place reviews.
+- `reviews`: CRUD review, like/unlike review.
+- `favorites`: add/remove favorite.
+- `owner`: place CRUD, promotion CRUD, review reply CRUD, analytics summary.
+- `trips`: trip CRUD, duplicate trip, trip stop CRUD, reorder stop.
+- `bookings`: place availability, booking create/list/cancel, owner booking operations.
+- `uploads`: avatar, place cover, review image uploads.
+- `ai`: trip planning suggestion with Gemini.
+- `health`: database and uploads health checks.
 
-- chỉ được xem danh sách địa điểm, chi tiết địa điểm, review công khai
-- không được mutation
+## Shared contracts hiện có
 
-### `traveler`
+- `auth`
+- `ai`
+- `owner`
+- `places`
+- `reviews`
+- `bookings`
+- `trips`
+- `uploads`
+- `users`
 
-- thao tác trên dữ liệu của chính mình:
-  - hồ sơ
-  - review
-  - favorites
-  - đổi mật khẩu
-  - xóa tài khoản
-  - AI trip planning
+Tất cả mobile API client đều parse response bằng contract từ `packages/shared`.
 
-### `owner`
+## Phân quyền
 
-- có toàn bộ quyền của traveler
-- chỉ được thao tác trên địa điểm và ưu đãi do chính mình sở hữu
-- không được sửa / xóa dữ liệu owner khác
+| Hành vi | Anonymous | Traveler | Owner |
+| --- | --- | --- | --- |
+| Xem place/review công khai | Có | Có | Có |
+| Quản lý hồ sơ cá nhân | Không | Có | Có |
+| Favorite địa điểm | Không | Có | Có |
+| Viết/sửa/xóa review của mình | Không | Có | Có |
+| Tạo/sửa/xóa trip của mình | Không | Có | Có |
+| Dùng AI trip builder | Không | Có | Có |
+| Tạo và hủy booking của mình | Không | Có | Có |
+| Tạo/sửa/xóa place | Không | Không | Có, chỉ dữ liệu của mình |
+| Tạo/sửa/xóa promotion | Không | Không | Có, chỉ dữ liệu của mình |
+| Phản hồi review bằng owner reply | Không | Không | Có, chỉ place của mình |
+| Quản lý option/slot/booking owner | Không | Không | Có, chỉ place của mình |
+| Xem owner analytics | Không | Không | Có |
 
-## Quy ước dữ liệu công khai
+## Trạng thái kiểm thử
 
-- role công khai: `traveler | owner`
-- category công khai: `attractions | dining | festivals`
-- response API: `ApiResponse`
-- mọi lỗi nghiệp vụ đi qua error code dùng chung
-
-## Kiểm thử hiện có
-
-### Backend local-safe
+### API
 
 - `npm run verify:api`
-- `56` test pass
-- phủ các nhóm:
-  - auth
-  - users
-  - places
-  - reviews
-  - favorites
-  - owner
-  - uploads
-  - ai
-  - health
-  - pagination
+- 67 test integration/unit pass.
 
-### Backend DB-backed
+### DB-backed API
 
-- đã có suite `tests/db`
-- chạy bằng `npm run verify:api:db`
-- cần PostgreSQL thật qua:
-  - Azure PostgreSQL
-  - PostgreSQL local
-  - service PostgreSQL trong GitHub Actions
+- `npm --prefix apps/api run test:db -- --run tests/db/bookings.db.test.ts tests/db/owner.db.test.ts tests/db/trips.db.test.ts`
+- 11 test DB-backed pass cho permission và nghiệp vụ có trạng thái.
 
 ### Mobile
 
 - `npm run verify:mobile`
 - `npm run test:mobile`
-- hiện có `11` test cho các màn và luồng chính:
-  - login
-  - register
-  - verify email
-  - delete account
-  - saved places
-  - owner management
+- 26 test pass cho auth, profile, owner management, bookings, trips, AI trip builder và avatar/UI logic.
 
-### Android E2E
+### Storage
 
-- đã thêm baseline flow Maestro trong `apps/mobile/.maestro`
+- `npm run verify:storage`
+- Kiểm tra được quyền ghi thư mục upload.
 
-## CI/CD và deploy
+## Trạng thái đồ án
 
-- nhánh phát triển chính: `main`
-- GitHub Actions:
-  - `CI`: chạy verify backend, verify mobile, storage check, DB-backed backend tests, mobile tests
-  - `Promote Deploy`: đồng bộ `main -> deploy` khi CI pass
-- Coolify:
-  - theo dõi nhánh `deploy`
-  - build từ repo root
-  - dùng `apps/api/Dockerfile`
-- database production: `Azure Database for PostgreSQL`
+- Codebase hiện ở mức `demo-ready` cho đồ án:
+  - có phân quyền rõ ràng
+  - có CRUD dữ liệu chính
+  - có AI flow
+  - có booking flow
+  - có owner analytics
+- Chưa được xem là production-live hoàn tất nếu chưa gắn credential thật cho:
+  - SMTP
+  - Gemini
+  - môi trường deploy production
 
-## Khoảng trống còn lại trước khi xem là product hoàn chỉnh
+## Ghi chú môi trường local
 
-- chưa xác nhận live deploy thật trên Azure VPS + Coolify + Azure PostgreSQL + SMTP + Gemini
-- chưa build thử APK/AAB trên môi trường EAS thật trong lượt này
-- chưa đổi `android.package` sang danh tính phát hành cuối cùng cho Google Play
-- vẫn cần manual test trên thiết bị thật để bắt lỗi layout hoặc hành vi ngữ cảnh máy thật
+- Local API đang dùng `.env` trong `apps/api`.
+- Local DB dev hiện được sync ổn bằng `npm --prefix apps/api run db:push`.
+- File log tạm `apps/api/dev-server.log` không thuộc phạm vi release.

@@ -1,4 +1,5 @@
 import type {
+  OwnerReviewReply,
   ReviewLikeToggleResponse,
   ReviewListItem,
   ReviewMutationResult,
@@ -40,7 +41,26 @@ function mapReviewListItem(r: {
   user: { fullName: string | null; username: string | null; avatarUrl: string | null };
   images: { url: string }[];
   _count: { likes: number };
+  reply: {
+    id: string;
+    content: string;
+    createdAt: Date;
+    owner: { fullName: string | null; username: string | null };
+  } | null;
 }): ReviewListItem {
+  const ownerReply: OwnerReviewReply | null = r.reply
+    ? {
+        id: r.reply.id,
+        ownerName: r.reply.owner.fullName || r.reply.owner.username || "Chu dia diem",
+        content: r.reply.content,
+        date: r.reply.createdAt.toLocaleDateString("en-US", {
+          month: "long",
+          day: "2-digit",
+          year: "numeric",
+        }),
+      }
+    : null;
+
   return reviewListItemSchema.parse({
     id: r.id,
     username: r.user.fullName || r.user.username || "Traveler",
@@ -54,6 +74,7 @@ function mapReviewListItem(r: {
     avatarUrl: r.user.avatarUrl,
     imageUrls: r.images.map((i) => i.url),
     likes: r._count.likes,
+    ownerReply,
   });
 }
 
@@ -74,6 +95,11 @@ export const reviewsService = {
           user: { select: { fullName: true, username: true, avatarUrl: true } },
           images: true,
           _count: { select: { likes: true } },
+          reply: {
+            include: {
+              owner: { select: { fullName: true, username: true } },
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
         skip: paging.offset,
@@ -101,6 +127,11 @@ export const reviewsService = {
           },
           images: true,
           _count: { select: { likes: true } },
+          reply: {
+            include: {
+              owner: { select: { fullName: true, username: true } },
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
         skip: paging.offset,
@@ -126,6 +157,18 @@ export const reviewsService = {
             content: r.content,
             imageUrls: r.images.map((i) => i.url),
             likes: r._count.likes,
+            ownerReply: r.reply
+              ? {
+                  id: r.reply.id,
+                  ownerName: r.reply.owner.fullName || r.reply.owner.username || "Chu dia diem",
+                  content: r.reply.content,
+                  date: r.reply.createdAt.toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "2-digit",
+                    year: "numeric",
+                  }),
+                }
+              : null,
           })
       ),
       total,

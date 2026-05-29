@@ -3,12 +3,12 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../common/colors';
 import { toUserMessage } from '../common/errorMessages';
 import { useAuth } from '../context/AuthContext';

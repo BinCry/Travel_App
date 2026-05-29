@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ownerReviewReplySchema } from "./reviews.js";
 
 export const placeCategorySchema = z.enum(["attractions", "dining", "festivals"]);
 
@@ -20,6 +21,7 @@ export const placeReviewSchema = z.object({
   content: z.string(),
   rating: z.number().int().min(1).max(5),
   imageUrls: z.array(z.string()),
+  ownerReply: ownerReviewReplySchema.nullable().optional(),
 });
 
 export const placeDetailSchema = z.object({

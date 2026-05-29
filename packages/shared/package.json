@@ -33,6 +33,14 @@
       "types": "./dist/contracts/reviews.d.ts",
       "default": "./dist/contracts/reviews.js"
     },
+    "./contracts/bookings": {
+      "types": "./dist/contracts/bookings.d.ts",
+      "default": "./dist/contracts/bookings.js"
+    },
+    "./contracts/trips": {
+      "types": "./dist/contracts/trips.d.ts",
+      "default": "./dist/contracts/trips.js"
+    },
     "./contracts/uploads": {
       "types": "./dist/contracts/uploads.d.ts",
       "default": "./dist/contracts/uploads.js"

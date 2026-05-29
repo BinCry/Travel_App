@@ -56,6 +56,29 @@ function ReviewItem({ item, onLikeToggle }: { item: ReviewListItem; onLikeToggle
         <Text style={{ color: '#4a4a4a', fontSize: 15, lineHeight: 22 }}>{item.content}</Text>
       </View>
 
+      {item.ownerReply ? (
+        <View
+          style={{
+            borderRadius: 14,
+            backgroundColor: '#eef8fb',
+            borderWidth: 1,
+            borderColor: '#d6edf5',
+            padding: 12,
+            rowGap: 4,
+            marginBottom: 10,
+          }}>
+          <Text style={{ color: colors.primary, fontWeight: '700' }}>
+            Phản hồi từ {item.ownerReply.ownerName}
+          </Text>
+          <Text style={{ color: colors.textPrimary, lineHeight: 20 }}>
+            {item.ownerReply.content}
+          </Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+            {item.ownerReply.date}
+          </Text>
+        </View>
+      ) : null}
+
       <PicturesContainer pictures={item.imageUrls} />
 
       <View style={{ flexDirection: 'row', columnGap: 25, marginTop: 5 }}>

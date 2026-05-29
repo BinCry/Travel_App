@@ -95,6 +95,15 @@ export default function UserReviewsScreen({
                   Rating {item.rating} · {item.likes} likes
                 </Text>
                 <Text style={screenStyles.cardContent}>{item.content}</Text>
+                {item.ownerReply ? (
+                  <View style={screenStyles.replyBox}>
+                    <Text style={screenStyles.replyLabel}>
+                      Phản hồi từ {item.ownerReply.ownerName}
+                    </Text>
+                    <Text style={screenStyles.replyContent}>{item.ownerReply.content}</Text>
+                    <Text style={screenStyles.replyMeta}>{item.ownerReply.date}</Text>
+                  </View>
+                ) : null}
               </View>
             </View>
             <View style={screenStyles.actions}>
@@ -189,6 +198,27 @@ const screenStyles = StyleSheet.create({
   },
   cardContent: {
     color: colors.textPrimary,
+  },
+  replyBox: {
+    marginTop: 4,
+    borderRadius: 12,
+    backgroundColor: '#eef8fb',
+    borderWidth: 1,
+    borderColor: '#d6edf5',
+    padding: 10,
+    rowGap: 4,
+  },
+  replyLabel: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  replyContent: {
+    color: colors.textPrimary,
+    lineHeight: 20,
+  },
+  replyMeta: {
+    color: colors.textSecondary,
+    fontSize: 12,
   },
   actions: {
     flexDirection: 'row',
