@@ -9,12 +9,24 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { createBooking, fetchPlaceBookingOptions } from '../../../lib/api/bookings';
-import type { BookingOption } from '../../../lib/api/types';
+import { createBooking, fetchPlaceBookingOptions, quoteBooking } from '../../../lib/api/bookings';
+import type { BookingOption, BookingQuote } from '../../../lib/api/types';
 import { colors } from '../common/colors';
 import { withBottomInset } from '../common/edgeToEdge';
 import { toUserMessage } from '../common/errorMessages';
 import type { AppScreenProps } from '../types/navigation';
+
+function formatCurrency(amount: number, currency: string) {
+  try {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    return `${amount.toLocaleString('vi-VN')} ${currency}`;
+  }
+}
 
 export default function BookingCheckoutScreen({
   navigation,
@@ -29,6 +41,10 @@ export default function BookingCheckoutScreen({
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [partySize, setPartySize] = useState('2');
   const [note, setNote] = useState('');
+  const [voucherCode, setVoucherCode] = useState('');
+  const [quote, setQuote] = useState<BookingQuote | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const loadOptions = useCallback(async () => {
@@ -75,8 +91,51 @@ export default function BookingCheckoutScreen({
     return null;
   }, [options, selectedSlotId]);
 
+  const parsedPartySize = useMemo(() => Number.parseInt(partySize, 10), [partySize]);
+
+  useEffect(() => {
+    if (!selectedSlotId || !Number.isFinite(parsedPartySize) || parsedPartySize < 1) {
+      setQuote(null);
+      setQuoteError(null);
+      return;
+    }
+
+    let active = true;
+    const timeout = setTimeout(() => {
+      setQuoteLoading(true);
+      quoteBooking({
+        slotId: selectedSlotId,
+        partySize: parsedPartySize,
+        voucherCode: voucherCode.trim() || undefined,
+      })
+        .then((data) => {
+          if (!active) {
+            return;
+          }
+          setQuote(data);
+          setQuoteError(null);
+        })
+        .catch((error) => {
+          if (!active) {
+            return;
+          }
+          setQuote(null);
+          setQuoteError(toUserMessage(error));
+        })
+        .finally(() => {
+          if (active) {
+            setQuoteLoading(false);
+          }
+        });
+    }, 250);
+
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+    };
+  }, [parsedPartySize, selectedSlotId, voucherCode]);
+
   const handleSubmit = async () => {
-    const parsedPartySize = Number.parseInt(partySize, 10);
     if (!selectedSlotId) {
       Alert.alert('Chưa chọn lịch', 'Hãy chọn một khung giờ còn chỗ trước khi tiếp tục.');
       return;
@@ -92,6 +151,7 @@ export default function BookingCheckoutScreen({
         slotId: selectedSlotId,
         partySize: parsedPartySize,
         note: note.trim() || undefined,
+        voucherCode: voucherCode.trim() || undefined,
       });
       Alert.alert('Đặt chỗ thành công', 'Booking của bạn đã được gửi để chủ địa điểm xác nhận.', [
         {
@@ -288,6 +348,28 @@ export default function BookingCheckoutScreen({
             }}
           />
         </View>
+        <View>
+          <Text style={{ marginBottom: 8, color: colors.textSecondary, fontWeight: '600' }}>
+            Voucher / coupon
+          </Text>
+          <TextInput
+            value={voucherCode}
+            onChangeText={(value) => setVoucherCode(value.toUpperCase())}
+            placeholder="Ví dụ: SUMMER2026"
+            autoCapitalize="characters"
+            style={{
+              minHeight: 52,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: '#d6e4ec',
+              paddingHorizontal: 14,
+              fontSize: 16,
+            }}
+          />
+          <Text style={{ marginTop: 8, color: colors.textSecondary, lineHeight: 20 }}>
+            Khi nhập voucher, hệ thống sẽ tự kiểm tra hiệu lực theo slot, thời gian và số lượt còn lại.
+          </Text>
+        </View>
         {selectedBookingContext ? (
           <View
             style={{
@@ -302,6 +384,41 @@ export default function BookingCheckoutScreen({
             <Text style={{ color: colors.textSecondary }}>
               {selectedBookingContext.slot.dateLabel} • {selectedBookingContext.slot.timeLabel}
             </Text>
+            {quoteLoading ? (
+              <View style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={{ color: colors.textSecondary }}>Đang tính giá booking...</Text>
+              </View>
+            ) : quote ? (
+              <View style={{ marginTop: 6, gap: 4 }}>
+                <Text style={{ color: colors.textSecondary }}>
+                  Đơn giá: {formatCurrency(quote.unitPriceAmount, quote.currency)}
+                </Text>
+                <Text style={{ color: colors.textSecondary }}>
+                  Tạm tính: {formatCurrency(quote.subtotalAmount, quote.currency)}
+                </Text>
+                <Text style={{ color: colors.textSecondary }}>
+                  Giảm giá: {formatCurrency(quote.discountAmount, quote.currency)}
+                </Text>
+                <Text style={{ color: colors.textPrimary, fontWeight: '800' }}>
+                  Thành tiền: {formatCurrency(quote.finalAmount, quote.currency)}
+                </Text>
+                {quote.appliedVoucherCode ? (
+                  <Text style={{ color: colors.primary, fontWeight: '700' }}>
+                    Voucher áp dụng: {quote.appliedVoucherCode}
+                  </Text>
+                ) : null}
+              </View>
+            ) : quoteError ? (
+              <Text style={{ marginTop: 6, color: colors.danger, lineHeight: 20 }}>{quoteError}</Text>
+            ) : (
+              <Text style={{ marginTop: 6, color: colors.textSecondary }}>
+                Giá cơ bản: {formatCurrency(
+                  selectedBookingContext.option.basePriceAmount,
+                  selectedBookingContext.option.currency
+                )}
+              </Text>
+            )}
           </View>
         ) : (
           <Text style={{ color: colors.danger }}>

@@ -4,6 +4,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { requireOwner } from "../middleware/requireOwner.js";
 import { ownerService } from "../services/owner.service.js";
 import { bookingsService } from "../services/bookings.service.js";
+import { vouchersService } from "../services/vouchers.service.js";
 import { wrapAsync } from "../http/errors.js";
 import { parsePagination } from "../http/pagination.js";
 
@@ -102,10 +103,33 @@ ownerRouter.get(
   })
 );
 
+ownerRouter.get(
+  "/places/:placeId/vouchers",
+  wrapAsync(async (req, res) => {
+    const data = await vouchersService.listOwnerVouchers(
+      req.user!.sub,
+      String(req.params.placeId)
+    );
+    sendOk(res, data);
+  })
+);
+
 ownerRouter.post(
   "/places/:placeId/booking-options",
   wrapAsync(async (req, res) => {
     const data = await bookingsService.createOwnerOption(
+      req.user!.sub,
+      String(req.params.placeId),
+      req.body
+    );
+    sendCreated(res, data);
+  })
+);
+
+ownerRouter.post(
+  "/places/:placeId/vouchers",
+  wrapAsync(async (req, res) => {
+    const data = await vouchersService.createOwnerVoucher(
       req.user!.sub,
       String(req.params.placeId),
       req.body
@@ -131,6 +155,17 @@ ownerRouter.get(
   })
 );
 
+ownerRouter.get(
+  "/bookings/:bookingId",
+  wrapAsync(async (req, res) => {
+    const data = await bookingsService.getOwnerBookingDetail(
+      req.user!.sub,
+      String(req.params.bookingId)
+    );
+    sendOk(res, data);
+  })
+);
+
 ownerRouter.post(
   "/places/:placeId/promotions",
   wrapAsync(async (req, res) => {
@@ -149,6 +184,18 @@ ownerRouter.patch(
     const data = await ownerService.updatePromotion(
       req.user!.sub,
       String(req.params.promotionId),
+      req.body
+    );
+    sendOk(res, data);
+  })
+);
+
+ownerRouter.patch(
+  "/vouchers/:voucherId",
+  wrapAsync(async (req, res) => {
+    const data = await vouchersService.updateOwnerVoucher(
+      req.user!.sub,
+      String(req.params.voucherId),
       req.body
     );
     sendOk(res, data);
@@ -230,6 +277,14 @@ ownerRouter.delete(
   "/promotions/:promotionId",
   wrapAsync(async (req, res) => {
     await ownerService.deletePromotion(req.user!.sub, String(req.params.promotionId));
+    sendEmpty(res);
+  })
+);
+
+ownerRouter.delete(
+  "/vouchers/:voucherId",
+  wrapAsync(async (req, res) => {
+    await vouchersService.deleteOwnerVoucher(req.user!.sub, String(req.params.voucherId));
     sendEmpty(res);
   })
 );

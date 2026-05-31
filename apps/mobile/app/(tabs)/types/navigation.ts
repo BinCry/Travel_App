@@ -36,6 +36,8 @@ export type RootStackParamList = {
   "AI Trip Builder": undefined | { initialQuery?: string; initialLocation?: string };
   "Booking Checkout": { placeId: string; placeName?: string };
   "Booking History": undefined;
+  "Booking Detail": { bookingId: string };
+  "Owner Booking Detail": { bookingId: string; placeId?: string; placeName?: string };
   "Your Reviews": undefined;
 };
 

@@ -37,7 +37,7 @@ describe('BookingHistoryScreen', () => {
     });
   });
 
-  it('navigates to place detail when tapping a booking card', async () => {
+  it('navigates to booking detail when tapping a booking card', async () => {
     mockFetchMyBookings.mockResolvedValueOnce([
       {
         id: 'booking-1',
@@ -67,6 +67,6 @@ describe('BookingHistoryScreen', () => {
     });
 
     fireEvent.press(screen.getByText('Happy Restaurant'));
-    expect(navigation.navigate).toHaveBeenCalledWith('Detail Location', { placeId: 'place-1' });
+    expect(navigation.navigate).toHaveBeenCalledWith('Booking Detail', { bookingId: 'booking-1' });
   });
 });

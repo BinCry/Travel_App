@@ -57,6 +57,17 @@ export const userReviewListItemSchema = z.object({
   ownerReply: ownerReviewReplySchema.nullable().optional(),
 });
 
+export const myPlaceReviewSchema = z.object({
+  id: z.string(),
+  placeId: z.string(),
+  rating: z.number().int().min(1).max(5),
+  date: z.string(),
+  content: z.string(),
+  imageUrls: z.array(z.string()),
+  likes: z.number().int().nonnegative(),
+  ownerReply: ownerReviewReplySchema.nullable().optional(),
+});
+
 export const ownerPlaceReviewSchema = reviewListItemSchema;
 
 export const reviewLikeToggleSchema = z.object({
@@ -72,6 +83,7 @@ export type ReviewCreateRequest = z.infer<typeof reviewCreateRequestSchema>;
 export type ReviewUpdateRequest = z.infer<typeof reviewUpdateRequestSchema>;
 export type ReviewListItem = z.infer<typeof reviewListItemSchema>;
 export type UserReviewListItem = z.infer<typeof userReviewListItemSchema>;
+export type MyPlaceReview = z.infer<typeof myPlaceReviewSchema>;
 export type ReviewLikeToggleResponse = z.infer<typeof reviewLikeToggleSchema>;
 export type ReviewMutationResult = z.infer<typeof reviewMutationResultSchema>;
 export type OwnerReviewReply = z.infer<typeof ownerReviewReplySchema>;

@@ -49,6 +49,10 @@
       "types": "./dist/contracts/bookings.d.ts",
       "default": "./dist/contracts/bookings.js"
     },
+    "./contracts/vouchers": {
+      "types": "./dist/contracts/vouchers.d.ts",
+      "default": "./dist/contracts/vouchers.js"
+    },
     "./contracts/trips": {
       "types": "./dist/contracts/trips.d.ts",
       "default": "./dist/contracts/trips.js"

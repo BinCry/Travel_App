@@ -5,6 +5,7 @@ import BookingCheckoutScreen from '../app/(tabs)/screens/BookingCheckoutScreen';
 
 const mockFetchPlaceBookingOptions = jest.fn();
 const mockCreateBooking = jest.fn();
+const mockQuoteBooking = jest.fn();
 
 const navigation = {
   navigate: jest.fn(),
@@ -13,6 +14,7 @@ const navigation = {
 jest.mock('../lib/api/bookings', () => ({
   fetchPlaceBookingOptions: (...args: unknown[]) => mockFetchPlaceBookingOptions(...args),
   createBooking: (...args: unknown[]) => mockCreateBooking(...args),
+  quoteBooking: (...args: unknown[]) => mockQuoteBooking(...args),
 }));
 
 describe('BookingCheckoutScreen', () => {
@@ -31,6 +33,8 @@ describe('BookingCheckoutScreen', () => {
         title: 'Bàn tối cho 2 người',
         description: 'View đẹp',
         priceLabel: '350.000đ / bàn',
+        basePriceAmount: 350000,
+        currency: 'VND',
         durationMinutes: 90,
         maxPartySize: 2,
         isActive: true,
@@ -50,6 +54,19 @@ describe('BookingCheckoutScreen', () => {
         ],
       },
     ]);
+    mockQuoteBooking.mockResolvedValue({
+      slotId: 'slot-1',
+      optionId: 'option-1',
+      placeId: 'place-1',
+      partySize: 2,
+      unitPriceAmount: 350000,
+      subtotalAmount: 350000,
+      discountAmount: 0,
+      finalAmount: 350000,
+      currency: 'VND',
+      appliedVoucherCode: null,
+      appliedVoucherTitle: null,
+    });
     mockCreateBooking.mockResolvedValueOnce({
       id: 'booking-1',
       placeId: 'place-1',
@@ -65,6 +82,12 @@ describe('BookingCheckoutScreen', () => {
       partySize: 2,
       note: 'Bàn gần cửa sổ',
       status: 'PENDING',
+      unitPriceAmount: 350000,
+      subtotalAmount: 350000,
+      discountAmount: 0,
+      finalAmount: 350000,
+      currency: 'VND',
+      appliedVoucherCode: null,
       createdAt: '2026-05-29T11:00:00.000Z',
       updatedAt: '2026-05-29T11:00:00.000Z',
       canCancel: true,

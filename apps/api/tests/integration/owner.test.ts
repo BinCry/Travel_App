@@ -199,7 +199,7 @@ describe("owner routes", () => {
           id: "reply-1",
           content: "Thank you for visiting.",
           createdAt: new Date("2026-05-29T10:00:00.000Z"),
-          owner: { fullName: "Owner Demo", username: "owner_demo" },
+          owner: { fullName: "Minh Hoàng", username: "minh_host" },
         },
       },
     ]);
@@ -226,7 +226,7 @@ describe("owner routes", () => {
       id: "reply-1",
       content: "Cảm ơn bạn đã đánh giá.",
       createdAt: new Date("2026-05-29T10:00:00.000Z"),
-      owner: { fullName: "Owner Demo", username: "owner_demo" },
+      owner: { fullName: "Minh Hoàng", username: "minh_host" },
     });
 
     const res = await request(app)

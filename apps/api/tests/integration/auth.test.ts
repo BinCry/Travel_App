@@ -103,9 +103,9 @@ describe("auth routes", () => {
     prismaMock.user.findUnique.mockResolvedValueOnce(null);
     prismaMock.user.create.mockResolvedValueOnce({
       id: 12,
-      email: "owner@example.com",
+      email: "lan.owner@example.com",
       emailVerifiedAt: null,
-      fullName: "Owner Demo",
+      fullName: "Lan Trần",
       username: null,
       avatarUrl: null,
       location: null,
@@ -114,14 +114,14 @@ describe("auth routes", () => {
     prismaMock.emailVerificationOtp.findFirst.mockResolvedValueOnce(null);
     prismaMock.emailVerificationOtp.create.mockResolvedValueOnce({
       id: "verify-otp-owner-1",
-      email: "owner@example.com",
+      email: "lan.owner@example.com",
     });
     prismaMock.emailVerificationOtp.updateMany.mockResolvedValueOnce({ count: 0 });
 
     const res = await request(app).post("/api/v1/auth/register").send({
-      email: "owner@example.com",
+      email: "lan.owner@example.com",
       password: "secret123",
-      fullName: "Owner Demo",
+      fullName: "Lan Trần",
       role: "owner",
     });
 
@@ -129,7 +129,7 @@ describe("auth routes", () => {
     expect(prismaMock.user.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          email: "owner@example.com",
+          email: "lan.owner@example.com",
           role: "OWNER",
         }),
       })
@@ -230,7 +230,7 @@ describe("auth routes", () => {
     const passwordHash = await bcrypt.hash("secret123", 4);
     prismaMock.user.findUnique.mockResolvedValueOnce({
       id: 2,
-      email: "owner@example.com",
+      email: "lan.owner@example.com",
       passwordHash,
       emailVerifiedAt: new Date(),
       fullName: "Owner",
@@ -241,7 +241,7 @@ describe("auth routes", () => {
     });
 
     const res = await request(app).post("/api/v1/auth/login").send({
-      email: "owner@example.com",
+      email: "lan.owner@example.com",
       password: "secret123",
     });
 

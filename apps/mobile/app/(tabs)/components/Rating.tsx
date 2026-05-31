@@ -49,7 +49,9 @@ export const RatingBar = ({ stars, percentage }: { stars: number, percentage: nu
       </View>
 
       <View style={ratingBarStyles.percentageContainer}>
-        <Text style={ratingBarStyles.percentageText}>{percentage}%</Text>
+        <Text numberOfLines={1} style={ratingBarStyles.percentageText}>
+          {percentage}%
+        </Text>
       </View>
     </View>
   );
@@ -95,12 +97,14 @@ export const ratingBarStyles = StyleSheet.create({
     borderRadius: 6,
   },
   percentageContainer: {
-    width: 25,
+    width: 44,
     alignItems: 'flex-end',
+    flexShrink: 0,
   },
   percentageText: {
     fontSize: 14,
     color: BAR_COLOR,
+    textAlign: 'right',
   },
 });
 

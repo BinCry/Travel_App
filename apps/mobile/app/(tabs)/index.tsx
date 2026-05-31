@@ -1,6 +1,7 @@
 import AddLocationScreen from './screens/AddLocationScreen';
 import AiTripBuilderScreen from './screens/AiTripBuilderScreen';
 import BookingCheckoutScreen from './screens/BookingCheckoutScreen';
+import BookingDetailScreen from './screens/BookingDetailScreen';
 import BookingHistoryScreen from './screens/BookingHistoryScreen';
 import ChangePasswordScreen from './screens/ChangePasswordScreen';
 import CollectionDetailScreen from './screens/CollectionDetailScreen';
@@ -16,6 +17,7 @@ import ManageBookingsScreen from './screens/ManageBookingsScreen';
 import ManagePlaceScreen from './screens/ManagePlaceScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
 import OwnerManagementScreen from './screens/OwnerManagementScreen';
+import OwnerBookingDetailScreen from './screens/OwnerBookingDetailScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import SavedPlacesScreen from './screens/SavedPlacesScreen';
@@ -146,6 +148,17 @@ const AuthenticatedStack = ({ isOwner }: { isOwner: boolean }) => (
       }}
     />
     <Stack.Screen
+      name="Booking Detail"
+      component={BookingDetailScreen}
+      options={{
+        headerShown: true,
+        title: 'Chi tiết booking',
+        headerStyle: { backgroundColor: '#FFFFFF' },
+        headerShadowVisible: false,
+        headerTintColor: '#000',
+      }}
+    />
+    <Stack.Screen
       name="All Reviews"
       component={ViewReviewsScreen}
       options={{ headerShown: false }}
@@ -244,6 +257,17 @@ const AuthenticatedStack = ({ isOwner }: { isOwner: boolean }) => (
           options={{
             headerShown: true,
             title: 'Quản lý booking',
+            headerStyle: { backgroundColor: '#FFFFFF' },
+            headerShadowVisible: false,
+            headerTintColor: '#000',
+          }}
+        />
+        <Stack.Screen
+          name="Owner Booking Detail"
+          component={OwnerBookingDetailScreen}
+          options={{
+            headerShown: true,
+            title: 'Chi tiết booking',
             headerStyle: { backgroundColor: '#FFFFFF' },
             headerShadowVisible: false,
             headerTintColor: '#000',

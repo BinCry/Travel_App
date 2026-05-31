@@ -26,10 +26,17 @@ import UserAvatar from '../components/UserAvatar';
 import styles from './ViewReviewsScreen.styles';
 import * as ImagePicker from 'expo-image-picker';
 import { fetchPlaceDetail } from '../../../lib/api/places';
-import { createReview, fetchPlaceReviews, toggleReviewLike } from '../../../lib/api/reviews';
+import {
+  createReview,
+  deleteReview,
+  fetchMyReviewForPlace,
+  fetchPlaceReviews,
+  toggleReviewLike,
+  updateReview,
+} from '../../../lib/api/reviews';
 import { uploadReviewImage } from '../../../lib/api/uploads';
-import type { ReviewListItem } from '../../../lib/api/types';
-import { getApiErrorMessage } from '../context/AuthContext';
+import type { MyPlaceReview, ReviewListItem } from '../../../lib/api/types';
+import { getApiErrorMessage, useAuth } from '../context/AuthContext';
 import type { AppScreenProps } from '../types/navigation';
 
 const REVIEW_AVATAR_FRAME_SIZE = 56;
@@ -113,11 +120,13 @@ export default function ViewReviewsScreen({
   navigation,
   route,
 }: AppScreenProps<'All Reviews'>) {
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const placeId = route.params?.placeId as string | undefined;
   const [reviewText, setReviewText] = useState('');
   const [userRating, setUserRating] = useState(5);
   const [reviews, setReviews] = useState<ReviewListItem[]>([]);
+  const [myReview, setMyReview] = useState<MyPlaceReview | null>(null);
   const [placeRate, setPlaceRate] = useState(0);
   const [placeCount, setPlaceCount] = useState(0);
   const [coverImage, setCoverImage] = useState('');
@@ -130,22 +139,28 @@ export default function ViewReviewsScreen({
     if (!placeId) return;
     setLoading(true);
     try {
-      const [place, list] = await Promise.all([
+      const [place, list, mine] = await Promise.all([
         fetchPlaceDetail(placeId),
         fetchPlaceReviews(placeId),
+        user?.role === 'traveler' ? fetchMyReviewForPlace(placeId) : Promise.resolve(null),
       ]);
       setPlaceRate(place.rating);
       setPlaceCount(place.ratingCount);
       setCoverImage(place.imageUrl);
       setReviews(list);
+      setMyReview(mine);
+      setReviewText(mine?.content ?? '');
+      setUserRating(mine?.rating ?? 5);
+      setPendingImages(mine?.imageUrls ?? []);
       setLoadError(null);
     } catch (error) {
       setReviews([]);
+      setMyReview(null);
       setLoadError(toUserMessage(error));
     } finally {
       setLoading(false);
     }
-  }, [placeId]);
+  }, [placeId, user?.role]);
 
   useEffect(() => {
     loadData();
@@ -196,11 +211,19 @@ export default function ViewReviewsScreen({
           }
         }
       }
-      await createReview(placeId, {
-        rating: userRating,
-        content: reviewText.trim(),
-        imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
-      });
+      if (myReview) {
+        await updateReview(myReview.id, {
+          rating: userRating,
+          content: reviewText.trim(),
+          imageUrls,
+        });
+      } else {
+        await createReview(placeId, {
+          rating: userRating,
+          content: reviewText.trim(),
+          imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+        });
+      }
       setReviewText('');
       setPendingImages([]);
       await loadData();
@@ -209,6 +232,33 @@ export default function ViewReviewsScreen({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleDeleteReview = () => {
+    if (!myReview) {
+      return;
+    }
+    Alert.alert('Xóa đánh giá', 'Bạn có chắc muốn xóa đánh giá này không?', [
+      { text: 'Giữ lại', style: 'cancel' },
+      {
+        text: 'Xóa',
+        style: 'destructive',
+        onPress: async () => {
+          setSubmitting(true);
+          try {
+            await deleteReview(myReview.id);
+            setReviewText('');
+            setUserRating(5);
+            setPendingImages([]);
+            await loadData();
+          } catch (error) {
+            Alert.alert('Không thể xóa đánh giá', toUserMessage(error));
+          } finally {
+            setSubmitting(false);
+          }
+        },
+      },
+    ]);
   };
 
   const ratingStats = calculateRatingStats(reviews);
@@ -320,7 +370,7 @@ export default function ViewReviewsScreen({
         }
       />
 
-      {pendingImages.length > 0 && (
+      {pendingImages.length > 0 && user?.role === 'traveler' && (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, paddingBottom: 8 }}>
           {pendingImages.map((uri, idx) => (
             <View key={`${uri}-${idx}`} style={{ marginRight: 8, marginBottom: 8 }}>
@@ -336,45 +386,86 @@ export default function ViewReviewsScreen({
         </View>
       )}
 
-      <View
-        style={[
-          styles.bottomInputContainer,
-          { paddingBottom: withBottomInset(insets.bottom, 10) },
-        ]}>
-        <TouchableOpacity style={styles.addPhotoIcon} onPress={handlePickImage}>
-          <Ionicons name="camera-outline" size={24} color="#908a8a" />
-        </TouchableOpacity>
-        <View style={{ marginRight: 8 }}>
-          <RatingStartBar ratingValue={userRating} size={18} />
-          <View style={{ flexDirection: 'row', marginTop: 4 }}>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <TouchableOpacity key={n} onPress={() => setUserRating(n)}>
-                <Text style={{ fontSize: 12, color: userRating === n ? colors.primary : '#999', marginHorizontal: 2 }}>
-                  {n}
-                </Text>
-              </TouchableOpacity>
-            ))}
+      {user?.role === 'traveler' ? (
+        <View
+          style={[
+            styles.bottomInputContainer,
+            {
+              paddingBottom: withBottomInset(insets.bottom, 10),
+              alignItems: 'flex-end',
+            },
+          ]}>
+          <TouchableOpacity style={styles.addPhotoIcon} onPress={handlePickImage}>
+            <Ionicons name="camera-outline" size={24} color="#908a8a" />
+          </TouchableOpacity>
+          <View style={{ marginRight: 8 }}>
+            <RatingStartBar ratingValue={userRating} size={18} />
+            <View style={{ flexDirection: 'row', marginTop: 4 }}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <TouchableOpacity key={n} onPress={() => setUserRating(n)}>
+                  <Text style={{ fontSize: 12, color: userRating === n ? colors.primary : '#999', marginHorizontal: 2 }}>
+                    {n}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
+          <View style={{ flex: 1 }}>
+            {myReview ? (
+              <Text style={{ marginBottom: 6, color: colors.textSecondary, fontWeight: '600' }}>
+                Bạn đang chỉnh sửa đánh giá hiện tại. Khi lưu, phản hồi cũ từ chủ địa điểm sẽ được làm mới.
+              </Text>
+            ) : null}
+            <TextInput
+              style={styles.textInput}
+              placeholder="Viết đánh giá của bạn..."
+              value={reviewText}
+              onChangeText={setReviewText}
+              multiline
+            />
+          </View>
+          {myReview ? (
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                {
+                  marginLeft: 8,
+                  backgroundColor: submitting ? '#ddd' : '#111827',
+                },
+              ]}
+              disabled={submitting}
+              onPress={handleDeleteReview}
+            >
+              <Ionicons name="trash-outline" size={20} color="white" />
+            </TouchableOpacity>
+          ) : null}
+          <TouchableOpacity
+            style={[styles.sendButton, { backgroundColor: reviewText && !submitting ? colors.primary : '#ddd', marginLeft: 8 }]}
+            disabled={!reviewText || submitting}
+            onPress={handleSubmitReview}
+          >
+            {submitting ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Ionicons name={myReview ? 'save-outline' : 'send'} size={20} color="white" />
+            )}
+          </TouchableOpacity>
         </View>
-        <TextInput
-          style={styles.textInput}
-          placeholder="Viết đánh giá của bạn..."
-          value={reviewText}
-          onChangeText={setReviewText}
-          multiline
-        />
-        <TouchableOpacity
-          style={[styles.sendButton, { backgroundColor: reviewText && !submitting ? colors.primary : '#ddd' }]}
-          disabled={!reviewText || submitting}
-          onPress={handleSubmitReview}
-        >
-          {submitting ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Ionicons name="send" size={20} color="white" />
-          )}
-        </TouchableOpacity>
-      </View>
+      ) : (
+        <View
+          style={{
+            paddingHorizontal: 16,
+            paddingTop: 10,
+            paddingBottom: withBottomInset(insets.bottom, 12),
+            borderTopWidth: 1,
+            borderTopColor: '#e5edf4',
+            backgroundColor: '#ffffff',
+          }}>
+          <Text style={{ color: colors.textSecondary, textAlign: 'center', lineHeight: 21 }}>
+            Tài khoản owner chỉ có thể phản hồi đánh giá tại màn quản lý địa điểm, không thể đăng đánh giá như traveler.
+          </Text>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }

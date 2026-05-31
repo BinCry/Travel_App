@@ -39,6 +39,18 @@ placesRouter.get(
 );
 
 placesRouter.get(
+  "/:placeId/reviews/me",
+  requireAuth,
+  wrapAsync(async (req, res) => {
+    const data = await reviewsService.getMineForPlace(
+      String(req.params.placeId),
+      req.user!.sub
+    );
+    sendOk(res, data);
+  })
+);
+
+placesRouter.get(
   "/:placeId/reviews",
   wrapAsync(async (req, res) => {
     const paging = parsePagination(req.query as Record<string, string | undefined>);

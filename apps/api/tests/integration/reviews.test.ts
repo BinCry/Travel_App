@@ -9,12 +9,18 @@ const transactionMock = {
     deleteMany: vi.fn(),
     createMany: vi.fn(),
   },
+  reviewReply: {
+    delete: vi.fn(),
+  },
   review: {
     update: vi.fn(),
   },
 };
 
 const prismaMock = {
+  user: {
+    findUnique: vi.fn(),
+  },
   place: {
     findUnique: vi.fn(),
     update: vi.fn(),
@@ -48,6 +54,10 @@ function makeToken(userId: number) {
 describe("review routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: 10,
+      role: "TRAVELER",
+    });
     prismaMock.review.aggregate.mockResolvedValue({
       _avg: { rating: 4.5 },
       _count: 2,
@@ -60,6 +70,7 @@ describe("review routes", () => {
     );
     transactionMock.reviewImage.deleteMany.mockResolvedValue({ count: 0 });
     transactionMock.reviewImage.createMany.mockResolvedValue({ count: 0 });
+    transactionMock.reviewReply.delete.mockResolvedValue({ id: "reply-1" });
     transactionMock.review.update.mockResolvedValue({ id: "review-1" });
   });
 

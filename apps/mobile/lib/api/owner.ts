@@ -21,6 +21,7 @@ import {
   bookingOptionCreateRequestSchema,
   bookingOptionSchema,
   bookingOptionUpdateRequestSchema,
+  ownerBookingDetailSchema,
   ownerBookingStatusUpdateRequestSchema,
   ownerPlaceBookingSchema,
 } from '@travel-app/shared/contracts/bookings';
@@ -29,11 +30,17 @@ import {
   ownerReviewReplySchema,
   ownerReviewReplyUpsertRequestSchema,
 } from '@travel-app/shared/contracts/reviews';
+import {
+  voucherCreateRequestSchema,
+  voucherSchema,
+  voucherUpdateRequestSchema,
+} from '@travel-app/shared/contracts/vouchers';
 import type {
   AvailabilitySlot,
   BookingOption,
   BookingOptionCreateRequest,
   BookingOptionUpdateRequest,
+  OwnerBookingDetail,
   OwnerAnalyticsSummary,
   OwnerPlace,
   OwnerPlaceBooking,
@@ -50,6 +57,9 @@ import type {
   PlaceUpdateCreateRequest,
   PlaceUpdateUpdateRequest,
   PromotionItem,
+  Voucher,
+  VoucherCreateRequest,
+  VoucherUpdateRequest,
 } from './types';
 import { apiClient, parseApiData, parseApiDataWithMeta } from './client';
 
@@ -164,6 +174,11 @@ export async function fetchOwnerPlaceBookings(placeId: string): Promise<OwnerPla
   return parseApiDataWithMeta(res.data, z.array(ownerPlaceBookingSchema)).data;
 }
 
+export async function fetchOwnerBookingDetail(bookingId: string): Promise<OwnerBookingDetail> {
+  const res = await apiClient.get(`/owner/bookings/${bookingId}`);
+  return parseApiData(res.data, ownerBookingDetailSchema);
+}
+
 export async function updateOwnerBookingStatus(
   bookingId: string,
   body: OwnerBookingStatusUpdateRequest
@@ -219,6 +234,37 @@ export async function upsertOwnerReviewReply(
 
 export async function deleteOwnerReviewReply(reviewId: string): Promise<void> {
   await apiClient.delete(`/owner/reviews/${reviewId}/reply`);
+}
+
+export async function fetchOwnerVouchers(placeId: string): Promise<Voucher[]> {
+  const res = await apiClient.get(`/owner/places/${placeId}/vouchers`);
+  return parseApiData(res.data, z.array(voucherSchema));
+}
+
+export async function createOwnerVoucher(
+  placeId: string,
+  body: VoucherCreateRequest
+): Promise<Voucher> {
+  const res = await apiClient.post(
+    `/owner/places/${placeId}/vouchers`,
+    voucherCreateRequestSchema.parse(body)
+  );
+  return parseApiData(res.data, voucherSchema);
+}
+
+export async function updateOwnerVoucher(
+  voucherId: string,
+  body: VoucherUpdateRequest
+): Promise<Voucher> {
+  const res = await apiClient.patch(
+    `/owner/vouchers/${voucherId}`,
+    voucherUpdateRequestSchema.parse(body)
+  );
+  return parseApiData(res.data, voucherSchema);
+}
+
+export async function deleteOwnerVoucher(voucherId: string): Promise<void> {
+  await apiClient.delete(`/owner/vouchers/${voucherId}`);
 }
 
 export async function createOwnerPlaceUpdate(

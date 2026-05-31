@@ -15,6 +15,8 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.mjs",
+    "db:seed:rich": "node prisma/seed.mjs",
+    "db:audit:consistency": "node scripts/database/audit-consistency.mjs",
     "db:create-test-accounts": "node scripts/database/create-test-accounts.mjs",
     "db:local:up": "docker compose -f docker-compose.local.yml up -d",
     "db:local:down": "docker compose -f docker-compose.local.yml down",

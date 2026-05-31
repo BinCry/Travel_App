@@ -20,6 +20,7 @@ const prismaMock = {
   review: {
     count: vi.fn(),
     findMany: vi.fn(),
+    groupBy: vi.fn(),
   },
 };
 
@@ -48,9 +49,16 @@ describe("places routes", () => {
         region: "Kyoto, Japan",
         category: "ATTRACTIONS",
         averageRating: 4.9,
-        ratingCount: 850,
+        ratingCount: 0,
         featureLabel: "Quiet Now",
         coverImageUrl: "https://cdn.example.com/gion.jpg",
+      },
+    ]);
+    prismaMock.review.groupBy.mockResolvedValueOnce([
+      {
+        placeId: "place-1",
+        _avg: { rating: 4.9 },
+        _count: { placeId: 1 },
       },
     ]);
 
@@ -62,7 +70,7 @@ describe("places routes", () => {
     const payload = placeListItemSchema.parse(res.body.data[0]);
     expect(payload.location).toBe("Kyoto, Japan");
     expect(payload.category).toBe("attractions");
-    expect(payload.ratingCount).toBe(850);
+    expect(payload.ratingCount).toBe(1);
   });
 
   it("returns place detail with favorite state for authenticated users", async () => {
@@ -72,7 +80,7 @@ describe("places routes", () => {
       region: "Tokyo, Japan",
       category: "DINING",
       averageRating: 4.7,
-      ratingCount: 120,
+      ratingCount: 0,
       coverImageUrl: "https://cdn.example.com/tokyo.jpg",
       featureLabel: "Open Now",
       about: "Local dining experience in Tokyo.",
@@ -104,6 +112,8 @@ describe("places routes", () => {
     const payload = placeDetailSchema.parse(res.body.data);
     expect(payload.isFavorite).toBe(true);
     expect(payload.category).toBe("dining");
+    expect(payload.rating).toBe(5);
+    expect(payload.ratingCount).toBe(1);
     expect(payload.reviews).toHaveLength(1);
     expect(payload.reviews[0]?.imageUrls).toEqual(["https://cdn.example.com/review.jpg"]);
   });

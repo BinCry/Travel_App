@@ -61,12 +61,14 @@ export type {
   PlaceUpdateUpdateRequest,
 } from '@travel-app/shared/contracts/place-updates';
 export type {
+  MyPlaceReview,
   OwnerPlaceReview,
   OwnerReviewReply,
   OwnerReviewReplyUpsertRequest,
   ReviewCreateRequest,
   ReviewLikeToggleResponse,
   ReviewListItem,
+  ReviewMutationResult,
   ReviewUpdateRequest,
   UserReviewListItem,
 } from '@travel-app/shared/contracts/reviews';
@@ -75,14 +77,26 @@ export type {
   AvailabilitySlotCreateRequest,
   AvailabilitySlotUpdateRequest,
   BookingCreateRequest,
+  BookingQuote,
+  BookingQuoteRequest,
   BookingOption,
   BookingOptionCreateRequest,
   BookingOptionUpdateRequest,
   BookingStatus,
+  BookingStatusHistoryEntry,
+  OwnerBookingDetail,
   OwnerBookingStatusUpdateRequest,
   OwnerPlaceBooking,
+  TravelerBookingCancelRequest,
   TravelerBooking,
+  TravelerBookingDetail,
 } from '@travel-app/shared/contracts/bookings';
+export type {
+  Voucher,
+  VoucherCreateRequest,
+  VoucherDiscountType,
+  VoucherUpdateRequest,
+} from '@travel-app/shared/contracts/vouchers';
 export type {
   TripBudget,
   TripCreateRequest,

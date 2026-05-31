@@ -1,14 +1,20 @@
 import { z } from 'zod';
 import {
+  myPlaceReviewSchema,
   reviewCreateRequestSchema,
   reviewLikeToggleSchema,
   reviewListItemSchema,
+  reviewMutationResultSchema,
+  reviewUpdateRequestSchema,
   userReviewListItemSchema,
 } from '@travel-app/shared/contracts/reviews';
 import type {
+  MyPlaceReview,
   ReviewCreateRequest,
   ReviewLikeToggleResponse,
   ReviewListItem,
+  ReviewMutationResult,
+  ReviewUpdateRequest,
   UserReviewListItem,
 } from './types';
 import { apiClient, parseApiData } from './client';
@@ -23,8 +29,22 @@ export async function fetchPlaceReviews(placeId: string): Promise<ReviewListItem
 export async function createReview(
   placeId: string,
   body: ReviewCreateRequest
-): Promise<void> {
-  await apiClient.post(`/places/${placeId}/reviews`, reviewCreateRequestSchema.parse(body));
+): Promise<ReviewMutationResult> {
+  const res = await apiClient.post(`/places/${placeId}/reviews`, reviewCreateRequestSchema.parse(body));
+  return parseApiData(res.data, reviewMutationResultSchema);
+}
+
+export async function fetchMyReviewForPlace(placeId: string): Promise<MyPlaceReview | null> {
+  const res = await apiClient.get(`/places/${placeId}/reviews/me`);
+  return parseApiData(res.data, myPlaceReviewSchema.nullable());
+}
+
+export async function updateReview(
+  reviewId: string,
+  body: ReviewUpdateRequest
+): Promise<ReviewMutationResult> {
+  const res = await apiClient.patch(`/reviews/${reviewId}`, reviewUpdateRequestSchema.parse(body));
+  return parseApiData(res.data, reviewMutationResultSchema);
 }
 
 export async function toggleReviewLike(reviewId: string): Promise<ReviewLikeToggleResponse> {

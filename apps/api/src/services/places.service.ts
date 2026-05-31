@@ -64,6 +64,25 @@ function mapPlaceUpdate(update: {
   });
 }
 
+function resolvePlaceRatingMetrics(
+  ratings: number[],
+  fallbackAverage: number,
+  fallbackCount: number
+) {
+  if (ratings.length === 0) {
+    return {
+      averageRating: fallbackAverage,
+      ratingCount: fallbackCount,
+    };
+  }
+
+  const total = ratings.reduce((sum, rating) => sum + rating, 0);
+  return {
+    averageRating: Math.round((total / ratings.length) * 10) / 10,
+    ratingCount: ratings.length,
+  };
+}
+
 export const placesService = {
   async list(query: Record<string, string | undefined>, paging: Pagination) {
     const catKey = query.category?.toLowerCase();
@@ -78,8 +97,35 @@ export const placesService = {
         take: paging.limit,
       }),
     ]);
+    const placeIds = list.map((place) => place.id);
+    const reviewMetrics =
+      placeIds.length > 0
+        ? await prisma.review.groupBy({
+            by: ["placeId"],
+            where: { placeId: { in: placeIds } },
+            _avg: { rating: true },
+            _count: { placeId: true },
+          })
+        : [];
+
+    const metricsByPlaceId = new Map(
+      reviewMetrics.map((metric) => [
+        metric.placeId,
+        {
+          averageRating: metric._avg.rating ? Math.round(metric._avg.rating * 10) / 10 : 0,
+          ratingCount: metric._count.placeId,
+        },
+      ])
+    );
+
     return {
-      items: list.map(toListDto),
+      items: list.map((place) =>
+        toListDto({
+          ...place,
+          averageRating: metricsByPlaceId.get(place.id)?.averageRating ?? place.averageRating,
+          ratingCount: metricsByPlaceId.get(place.id)?.ratingCount ?? place.ratingCount,
+        })
+      ),
       total,
       limit: paging.limit,
       offset: paging.offset,
@@ -133,13 +179,19 @@ export const placesService = {
       });
     });
 
+    const ratingMetrics = resolvePlaceRatingMetrics(
+      place.reviews.map((review) => review.rating),
+      place.averageRating,
+      place.ratingCount
+    );
+
     return placeDetailSchema.parse({
       id: place.id,
       name: place.name,
       location: place.region,
       category: fromPrismaPlaceCategory(place.category),
-      rating: place.averageRating,
-      ratingCount: place.ratingCount,
+      rating: ratingMetrics.averageRating,
+      ratingCount: ratingMetrics.ratingCount,
       imageUrl: place.coverImageUrl,
       featureLabel: place.featureLabel,
       about: place.about,

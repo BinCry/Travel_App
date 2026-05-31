@@ -171,7 +171,7 @@ describe("users routes", () => {
   it("deletes an owner account and cascades owned data cleanup", async () => {
     prismaMock.user.findUnique.mockResolvedValueOnce({
       id: 20,
-      email: "owner@example.com",
+      email: "lan.owner@example.com",
       passwordHash: await bcrypt.hash("owner-secret123", 4),
       role: "OWNER",
     });

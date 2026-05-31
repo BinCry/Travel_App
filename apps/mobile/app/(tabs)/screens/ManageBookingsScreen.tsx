@@ -15,14 +15,20 @@ import type {
   BookingOption,
   OwnerPlaceBooking,
   OwnerBookingStatusUpdateRequest,
+  Voucher,
+  VoucherDiscountType,
 } from '../../../lib/api/types';
 import {
   createOwnerBookingOption,
   createOwnerSlot,
+  createOwnerVoucher,
   deleteOwnerBookingOption,
   deleteOwnerSlot,
+  deleteOwnerVoucher,
   fetchOwnerBookingOptions,
+  fetchOwnerVouchers,
   fetchOwnerPlaceBookings,
+  updateOwnerVoucher,
   updateOwnerBookingOption,
   updateOwnerBookingStatus,
   updateOwnerSlot,
@@ -36,6 +42,8 @@ type OptionFormState = {
   title: string;
   description: string;
   priceLabel: string;
+  basePriceAmount: string;
+  currency: string;
   durationMinutes: string;
   maxPartySize: string;
   isActive: boolean;
@@ -50,10 +58,26 @@ type SlotFormState = {
   isActive: boolean;
 };
 
+type VoucherFormState = {
+  code: string;
+  title: string;
+  description: string;
+  optionId: string | null;
+  isActive: boolean;
+  usageLimit: string;
+  discountType: VoucherDiscountType;
+  discountValue: string;
+  maxDiscountAmount: string;
+  startsAt: string;
+  endsAt: string;
+};
+
 const defaultOptionForm = (): OptionFormState => ({
   title: '',
   description: '',
   priceLabel: '',
+  basePriceAmount: '0',
+  currency: 'VND',
   durationMinutes: '90',
   maxPartySize: '2',
   isActive: true,
@@ -66,6 +90,20 @@ const defaultSlotForm = (optionId: string | null = null): SlotFormState => ({
   endTime: '',
   capacity: '4',
   isActive: true,
+});
+
+const defaultVoucherForm = (optionId: string | null = null): VoucherFormState => ({
+  code: '',
+  title: '',
+  description: '',
+  optionId,
+  isActive: true,
+  usageLimit: '',
+  discountType: 'fixed_amount',
+  discountValue: '',
+  maxDiscountAmount: '',
+  startsAt: '',
+  endsAt: '',
 });
 
 function toDateInput(iso: string) {
@@ -116,6 +154,7 @@ function actionButtonsForBooking(status: OwnerPlaceBooking['status']) {
 }
 
 export default function ManageBookingsScreen({
+  navigation,
   route,
 }: AppScreenProps<'Manage Bookings'>) {
   const insets = useSafeAreaInsets();
@@ -123,6 +162,7 @@ export default function ManageBookingsScreen({
   const placeName = route.params.placeName ?? 'Địa điểm';
   const [options, setOptions] = useState<BookingOption[]>([]);
   const [bookings, setBookings] = useState<OwnerPlaceBooking[]>([]);
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [optionForm, setOptionForm] = useState<OptionFormState>(defaultOptionForm);
@@ -134,20 +174,27 @@ export default function ManageBookingsScreen({
   const [savingSlot, setSavingSlot] = useState(false);
   const [deletingSlotId, setDeletingSlotId] = useState<string | null>(null);
   const [statusLoadingId, setStatusLoadingId] = useState<string | null>(null);
+  const [voucherForm, setVoucherForm] = useState<VoucherFormState>(defaultVoucherForm);
+  const [editingVoucherId, setEditingVoucherId] = useState<string | null>(null);
+  const [savingVoucher, setSavingVoucher] = useState(false);
+  const [deletingVoucherId, setDeletingVoucherId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [nextOptions, nextBookings] = await Promise.all([
+      const [nextOptions, nextBookings, nextVouchers] = await Promise.all([
         fetchOwnerBookingOptions(placeId),
         fetchOwnerPlaceBookings(placeId),
+        fetchOwnerVouchers(placeId),
       ]);
       setOptions(nextOptions);
       setBookings(nextBookings);
+      setVouchers(nextVouchers);
       setLoadError(null);
     } catch (error) {
       setOptions([]);
       setBookings([]);
+      setVouchers([]);
       setLoadError(toUserMessage(error));
     } finally {
       setLoading(false);
@@ -175,15 +222,29 @@ export default function ManageBookingsScreen({
     setSlotForm(defaultSlotForm());
   };
 
+  const resetVoucherEditor = () => {
+    setEditingVoucherId(null);
+    setVoucherForm(defaultVoucherForm());
+  };
+
   const handleSaveOption = async () => {
+    const basePriceAmount = Number.parseInt(optionForm.basePriceAmount, 10);
     const durationMinutes = Number.parseInt(optionForm.durationMinutes, 10);
     const maxPartySize = Number.parseInt(optionForm.maxPartySize, 10);
     if (!optionForm.title.trim()) {
       Alert.alert('Thiếu tiêu đề', 'Vui lòng nhập tên option booking.');
       return;
     }
-    if (!Number.isFinite(durationMinutes) || !Number.isFinite(maxPartySize)) {
-      Alert.alert('Dữ liệu chưa hợp lệ', 'Thời lượng và số người tối đa phải là số hợp lệ.');
+    if (
+      !Number.isFinite(basePriceAmount) ||
+      basePriceAmount < 0 ||
+      !Number.isFinite(durationMinutes) ||
+      !Number.isFinite(maxPartySize)
+    ) {
+      Alert.alert(
+        'Dữ liệu chưa hợp lệ',
+        'Giá cơ bản, thời lượng và số người tối đa phải là số hợp lệ.'
+      );
       return;
     }
 
@@ -193,6 +254,8 @@ export default function ManageBookingsScreen({
         title: optionForm.title.trim(),
         description: optionForm.description.trim() || undefined,
         priceLabel: optionForm.priceLabel.trim() || undefined,
+        basePriceAmount,
+        currency: optionForm.currency.trim() || 'VND',
         durationMinutes,
         maxPartySize,
         isActive: optionForm.isActive,
@@ -250,6 +313,8 @@ export default function ManageBookingsScreen({
       title: option.title,
       description: option.description ?? '',
       priceLabel: option.priceLabel ?? '',
+      basePriceAmount: String(option.basePriceAmount),
+      currency: option.currency,
       durationMinutes: String(option.durationMinutes),
       maxPartySize: String(option.maxPartySize),
       isActive: option.isActive,
@@ -309,6 +374,106 @@ export default function ManageBookingsScreen({
             Alert.alert('Không thể xóa slot', toUserMessage(error));
           } finally {
             setDeletingSlotId(null);
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleStartEditVoucher = (voucher: Voucher) => {
+    setEditingVoucherId(voucher.id);
+    setVoucherForm({
+      code: voucher.code,
+      title: voucher.title,
+      description: voucher.description ?? '',
+      optionId: voucher.optionId,
+      isActive: voucher.isActive,
+      usageLimit: voucher.usageLimit != null ? String(voucher.usageLimit) : '',
+      discountType: voucher.discountType,
+      discountValue: String(voucher.discountValue),
+      maxDiscountAmount: voucher.maxDiscountAmount != null ? String(voucher.maxDiscountAmount) : '',
+      startsAt: voucher.startsAt ? voucher.startsAt.slice(0, 16) : '',
+      endsAt: voucher.endsAt ? voucher.endsAt.slice(0, 16) : '',
+    });
+  };
+
+  const handleSaveVoucher = async () => {
+    const discountValue = Number.parseInt(voucherForm.discountValue, 10);
+    const usageLimit = voucherForm.usageLimit.trim()
+      ? Number.parseInt(voucherForm.usageLimit, 10)
+      : undefined;
+    const maxDiscountAmount = voucherForm.maxDiscountAmount.trim()
+      ? Number.parseInt(voucherForm.maxDiscountAmount, 10)
+      : undefined;
+
+    if (!voucherForm.code.trim() || !voucherForm.title.trim()) {
+      Alert.alert('Thiếu thông tin', 'Voucher cần có mã và tiêu đề rõ ràng.');
+      return;
+    }
+
+    if (!Number.isFinite(discountValue) || discountValue <= 0) {
+      Alert.alert('Giảm giá chưa hợp lệ', 'Giá trị giảm giá phải lớn hơn 0.');
+      return;
+    }
+
+    if (usageLimit !== undefined && (!Number.isFinite(usageLimit) || usageLimit <= 0)) {
+      Alert.alert('Giới hạn lượt dùng chưa hợp lệ', 'Giới hạn lượt dùng phải lớn hơn 0.');
+      return;
+    }
+
+    if (
+      maxDiscountAmount !== undefined &&
+      (!Number.isFinite(maxDiscountAmount) || maxDiscountAmount <= 0)
+    ) {
+      Alert.alert('Trần giảm giá chưa hợp lệ', 'Trần giảm giá phải lớn hơn 0.');
+      return;
+    }
+
+    setSavingVoucher(true);
+    try {
+      const payload = {
+        optionId: voucherForm.optionId || undefined,
+        code: voucherForm.code.trim(),
+        title: voucherForm.title.trim(),
+        description: voucherForm.description.trim() || undefined,
+        isActive: voucherForm.isActive,
+        usageLimit,
+        discountType: voucherForm.discountType,
+        discountValue,
+        maxDiscountAmount,
+        startsAt: voucherForm.startsAt ? new Date(voucherForm.startsAt).toISOString() : undefined,
+        endsAt: voucherForm.endsAt ? new Date(voucherForm.endsAt).toISOString() : undefined,
+      };
+
+      if (editingVoucherId) {
+        await updateOwnerVoucher(editingVoucherId, payload);
+      } else {
+        await createOwnerVoucher(placeId, payload);
+      }
+      resetVoucherEditor();
+      await loadData();
+    } catch (error) {
+      Alert.alert('Không thể lưu voucher', toUserMessage(error));
+    } finally {
+      setSavingVoucher(false);
+    }
+  };
+
+  const handleDeleteVoucher = (voucherId: string) => {
+    Alert.alert('Xóa voucher', 'Bạn có chắc muốn xóa voucher này không?', [
+      { text: 'Giữ lại', style: 'cancel' },
+      {
+        text: 'Xóa',
+        style: 'destructive',
+        onPress: async () => {
+          setDeletingVoucherId(voucherId);
+          try {
+            await deleteOwnerVoucher(voucherId);
+            await loadData();
+          } catch (error) {
+            Alert.alert('Không thể xóa voucher', toUserMessage(error));
+          } finally {
+            setDeletingVoucherId(null);
           }
         },
       },
@@ -425,6 +590,22 @@ export default function ManageBookingsScreen({
         />
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <TextInput
+            value={optionForm.basePriceAmount}
+            onChangeText={(value) => setOptionForm((prev) => ({ ...prev, basePriceAmount: value }))}
+            placeholder="350000"
+            keyboardType="number-pad"
+            style={[inputStyle, { flex: 1 }]}
+          />
+          <TextInput
+            value={optionForm.currency}
+            onChangeText={(value) => setOptionForm((prev) => ({ ...prev, currency: value.toUpperCase() }))}
+            placeholder="VND"
+            autoCapitalize="characters"
+            style={[inputStyle, { flex: 1 }]}
+          />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TextInput
             value={optionForm.durationMinutes}
             onChangeText={(value) =>
               setOptionForm((prev) => ({ ...prev, durationMinutes: value }))
@@ -490,8 +671,8 @@ export default function ManageBookingsScreen({
                   </Text>
                 ) : null}
                 <Text style={{ marginTop: 6, color: colors.textSecondary }}>
-                  {option.priceLabel || 'Chưa khai báo giá'} • {option.durationMinutes} phút • tối đa{' '}
-                  {option.maxPartySize} người
+                  {option.priceLabel || `${option.basePriceAmount.toLocaleString('vi-VN')} ${option.currency}`} •{' '}
+                  {option.durationMinutes} phút • tối đa {option.maxPartySize} người
                 </Text>
               </View>
               <View style={toggleStyle(option.isActive)}>
@@ -527,6 +708,14 @@ export default function ManageBookingsScreen({
                 <Text style={{ color: '#fff', fontWeight: '700' }}>
                   {deletingOptionId === option.id ? 'Đang xóa...' : 'Xóa option'}
                 </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setEditingVoucherId(null);
+                  setVoucherForm(defaultVoucherForm(option.id));
+                }}
+                style={[secondaryButtonStyle, { minWidth: 110 }]}>
+                <Text style={secondaryButtonTextStyle}>Gắn voucher</Text>
               </Pressable>
             </View>
 
@@ -657,6 +846,205 @@ export default function ManageBookingsScreen({
           borderColor: '#e5edf4',
           backgroundColor: '#ffffff',
           padding: 18,
+          rowGap: 12,
+        }}>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: colors.textPrimary }}>
+          {editingVoucherId ? 'Chỉnh sửa voucher' : 'Tạo voucher / coupon'}
+        </Text>
+        <TextInput
+          value={voucherForm.code}
+          onChangeText={(value) => setVoucherForm((prev) => ({ ...prev, code: value.toUpperCase() }))}
+          placeholder="SUMMER2026"
+          autoCapitalize="characters"
+          style={inputStyle}
+        />
+        <TextInput
+          value={voucherForm.title}
+          onChangeText={(value) => setVoucherForm((prev) => ({ ...prev, title: value }))}
+          placeholder="Giảm 15% bữa tối"
+          style={inputStyle}
+        />
+        <TextInput
+          value={voucherForm.description}
+          onChangeText={(value) => setVoucherForm((prev) => ({ ...prev, description: value }))}
+          placeholder="Điều kiện áp dụng cho khách"
+          multiline
+          textAlignVertical="top"
+          style={[inputStyle, { minHeight: 86, paddingTop: 14 }]}
+        />
+        <TextInput
+          value={voucherForm.optionId ?? ''}
+          onChangeText={(value) =>
+            setVoucherForm((prev) => ({ ...prev, optionId: value.trim() || null }))
+          }
+          placeholder="Option ID áp dụng (để trống = toàn địa điểm)"
+          style={inputStyle}
+        />
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <Pressable
+            onPress={() =>
+              setVoucherForm((prev) => ({
+                ...prev,
+                discountType: prev.discountType === 'fixed_amount' ? 'percentage' : 'fixed_amount',
+              }))
+            }
+            style={[secondaryButtonStyle, { flex: 1 }]}>
+            <Text style={secondaryButtonTextStyle}>
+              {voucherForm.discountType === 'fixed_amount' ? 'Giảm theo tiền' : 'Giảm theo %'}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setVoucherForm((prev) => ({ ...prev, isActive: !prev.isActive }))}
+            style={[secondaryButtonStyle, { flex: 1 }]}>
+            <Text style={secondaryButtonTextStyle}>
+              {voucherForm.isActive ? 'Đang kích hoạt' : 'Đang tạm ẩn'}
+            </Text>
+          </Pressable>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TextInput
+            value={voucherForm.discountValue}
+            onChangeText={(value) => setVoucherForm((prev) => ({ ...prev, discountValue: value }))}
+            placeholder={voucherForm.discountType === 'percentage' ? '15' : '50000'}
+            keyboardType="number-pad"
+            style={[inputStyle, { flex: 1 }]}
+          />
+          <TextInput
+            value={voucherForm.maxDiscountAmount}
+            onChangeText={(value) =>
+              setVoucherForm((prev) => ({ ...prev, maxDiscountAmount: value }))
+            }
+            placeholder="Trần giảm giá"
+            keyboardType="number-pad"
+            style={[inputStyle, { flex: 1 }]}
+          />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TextInput
+            value={voucherForm.usageLimit}
+            onChangeText={(value) => setVoucherForm((prev) => ({ ...prev, usageLimit: value }))}
+            placeholder="Giới hạn lượt dùng"
+            keyboardType="number-pad"
+            style={[inputStyle, { flex: 1 }]}
+          />
+          <TextInput
+            value={voucherForm.startsAt}
+            onChangeText={(value) => setVoucherForm((prev) => ({ ...prev, startsAt: value }))}
+            placeholder="2026-06-15T09:00"
+            style={[inputStyle, { flex: 1 }]}
+          />
+        </View>
+        <TextInput
+          value={voucherForm.endsAt}
+          onChangeText={(value) => setVoucherForm((prev) => ({ ...prev, endsAt: value }))}
+          placeholder="2026-06-30T23:59"
+          style={inputStyle}
+        />
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <Pressable
+            onPress={() => void handleSaveVoucher()}
+            disabled={savingVoucher}
+            style={[primaryButtonStyle, { flex: 1, opacity: savingVoucher ? 0.6 : 1 }]}>
+            <Text style={primaryButtonTextStyle}>
+              {savingVoucher ? 'Đang lưu...' : editingVoucherId ? 'Lưu voucher' : 'Tạo voucher'}
+            </Text>
+          </Pressable>
+          {(editingVoucherId || voucherForm.code || voucherForm.title) ? (
+            <Pressable onPress={resetVoucherEditor} style={[secondaryButtonStyle, { flex: 1 }]}>
+              <Text style={secondaryButtonTextStyle}>Hủy</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+
+      <View
+        style={{
+          marginTop: 20,
+          borderRadius: 24,
+          borderWidth: 1,
+          borderColor: '#e5edf4',
+          backgroundColor: '#ffffff',
+          padding: 18,
+          rowGap: 14,
+        }}>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: colors.textPrimary }}>
+          Voucher đang chạy
+        </Text>
+        {vouchers.length ? (
+          vouchers.map((voucher) => (
+            <View
+              key={voucher.id}
+              style={{
+                borderRadius: 18,
+                backgroundColor: '#f8fbfd',
+                padding: 14,
+                gap: 6,
+              }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textPrimary }}>
+                    {voucher.code} • {voucher.title}
+                  </Text>
+                  {voucher.description ? (
+                    <Text style={{ marginTop: 4, color: colors.textSecondary, lineHeight: 20 }}>
+                      {voucher.description}
+                    </Text>
+                  ) : null}
+                </View>
+                <View style={toggleStyle(voucher.isActive)}>
+                  <Text style={toggleTextStyle(voucher.isActive)}>
+                    {voucher.isActive ? 'Đang mở' : 'Đã ẩn'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={{ color: colors.textSecondary }}>
+                {voucher.discountType === 'percentage'
+                  ? `Giảm ${voucher.discountValue}%`
+                  : `Giảm ${voucher.discountValue.toLocaleString('vi-VN')} VND`}
+                {voucher.remainingUses != null ? ` • Còn ${voucher.remainingUses} lượt` : ' • Không giới hạn lượt'}
+              </Text>
+              <Text style={{ color: colors.textSecondary }}>
+                Đã dùng: {voucher.usedCount}
+                {voucher.optionId ? ` • Áp cho option ${voucher.optionId}` : ' • Áp cho toàn địa điểm'}
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
+                <Pressable
+                  onPress={() => handleStartEditVoucher(voucher)}
+                  style={[secondaryButtonStyle, { minWidth: 100 }]}>
+                  <Text style={secondaryButtonTextStyle}>Sửa voucher</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => handleDeleteVoucher(voucher.id)}
+                  disabled={deletingVoucherId === voucher.id}
+                  style={{
+                    borderRadius: 14,
+                    backgroundColor: '#111827',
+                    paddingHorizontal: 14,
+                    paddingVertical: 11,
+                    opacity: deletingVoucherId === voucher.id ? 0.6 : 1,
+                  }}>
+                  <Text style={{ color: '#fff', fontWeight: '700' }}>
+                    {deletingVoucherId === voucher.id ? 'Đang xóa...' : 'Xóa voucher'}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          ))
+        ) : (
+          <Text style={{ color: colors.textSecondary }}>
+            Chưa có voucher nào. Hãy tạo coupon để traveler áp dụng ngay khi checkout.
+          </Text>
+        )}
+      </View>
+
+      <View
+        style={{
+          marginTop: 20,
+          borderRadius: 24,
+          borderWidth: 1,
+          borderColor: '#e5edf4',
+          backgroundColor: '#ffffff',
+          padding: 18,
           rowGap: 14,
         }}>
         <Text style={{ fontSize: 22, fontWeight: '800', color: colors.textPrimary }}>
@@ -711,6 +1099,17 @@ export default function ManageBookingsScreen({
                     Ghi chú: {booking.note}
                   </Text>
                 ) : null}
+                <Pressable
+                  onPress={() =>
+                    navigation.navigate('Owner Booking Detail', {
+                      bookingId: booking.id,
+                      placeId,
+                      placeName,
+                    })
+                  }
+                  style={[secondaryButtonStyle, { alignSelf: 'flex-start' }]}>
+                  <Text style={secondaryButtonTextStyle}>Xem chi tiết</Text>
+                </Pressable>
                 {actions.length ? (
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
                     {actions.map((action) => (

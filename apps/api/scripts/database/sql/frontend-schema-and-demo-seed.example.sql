@@ -1,11 +1,11 @@
 -- =============================================================================
--- Full setup: PostgreSQL schema (same shape as prisma/schema.prisma) + demo data.
--- Intended for an EMPTY database in psql or another PostgreSQL client.
+-- Full setup: PostgreSQL schema (same shape as prisma/schema.prisma) + sample
+-- data for quick manual frontend testing.
 --
 -- Prefer on real projects: npx prisma db push && npm run db:seed
 -- Use THIS file only if you must run DDL/seed purely in SQL.
 --
--- After run: POST /auth/login demo@example.com / demo1234
+-- After run: POST /auth/login linh.nguyen@example.com / travel1234
 -- Place IDs fixed below match JSON comments for mobile testing.
 -- =============================================================================
 
@@ -96,12 +96,12 @@ ALTER TABLE "Favorite" ADD CONSTRAINT "Favorite_userId_fkey"
 ALTER TABLE "Favorite" ADD CONSTRAINT "Favorite_placeId_fkey"
   FOREIGN KEY ("placeId") REFERENCES "Place"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
--- bcryptjs cost 10, plain password: demo1234
+-- bcryptjs cost 10, plain password: travel1234
 INSERT INTO "User" ("email", "passwordHash", "fullName", "username", "location", "avatarUrl") VALUES (
-  'demo@example.com',
-  '$2b$10$bUbfUhOA7LBVZe0riQuoyuL0Dl7VQeixMT1oRFrodqrxkM1p21SYq',
-  'Alex Johnson',
-  'Alex_love_travel',
+  'linh.nguyen@example.com',
+  '$2b$10$yds8y/KZXIjaYlVId6ARQe.gOBZgIkn5wW9gzDE6RVItbizcZN/Ni',
+  'Linh Nguyễn',
+  'linh_di_choi',
   'Việt Nam',
   'https://th.bing.com/th/id/OIP.iY6OLSZImubhw9Yiwg6OuAHaHa?w=186&h=186&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3'
 );
@@ -117,20 +117,20 @@ VALUES
   'https://i.pinimg.com/1200x/28/31/da/2831da0f8a4b18fde25867ef90e66207.jpg',
   'Yên tĩnh lúc này',
   4.9,
-  850,
-  'Experience the perfect tropical escape at Blue Lagoon Resort. Surrounded by lush jungles and crystal-clear waters.',
+  1,
+  'Phố cổ phù hợp để đi bộ, chụp ảnh và cảm nhận nhịp sống truyền thống của Kyoto.',
   65.3
 ),
 (
   'fe_place_dining_happy',
-  'Happy Restaurant',
+  'Tsukiji Corner',
   'Tokyo, Japan',
   'DINING'::"PlaceCategory",
   'https://i.pinimg.com/1200x/f1/9c/a0/f19ca09250c88864491e7cacecd1eb40.jpg',
   'Đang mở cửa',
-  4.7,
-  120,
-  'Local dining experience in Tokyo.',
+  0,
+  0,
+  'Quán ăn nhỏ phục vụ set hải sản và bữa tối cho nhóm 2-4 người.',
   40
 ),
 (
@@ -139,10 +139,10 @@ VALUES
   'Tokyo, Japan',
   'FESTIVALS'::"PlaceCategory",
   'https://i.pinimg.com/1200x/f1/9c/a0/f19ca09250c88864491e7cacecd1eb40.jpg',
-  'This weekend',
-  4.8,
-  340,
-  'Evening lanterns and street food stalls along the riverside.',
+  'Cuối tuần này',
+  0,
+  0,
+  'Lễ hội đèn lồng buổi tối với đồ ăn đường phố và các gian hàng nghệ thuật.',
   35
 );
 
@@ -151,9 +151,9 @@ SELECT
   'fe_review_gion_first',
   'fe_place_gion_001',
   u.id,
-  4,
-  'Walking through Gion at dusk was magical. The lanterns began to glow and the atmosphere was simply fresh.'
-FROM "User" u WHERE u."email" = 'demo@example.com';
+  5,
+  'Đi bộ qua Gion lúc chạng vạng rất cuốn hút. Đèn lồng bắt đầu sáng lên và không khí cực kỳ dễ chịu.'
+FROM "User" u WHERE u."email" = 'linh.nguyen@example.com';
 
 INSERT INTO "ReviewImage" ("id", "reviewId", "url") VALUES
 ('fe_rimg_a', 'fe_review_gion_first', 'https://i.pinimg.com/736x/72/41/dd/7241ddb23e868c19ec43a701104132f6.jpg'),

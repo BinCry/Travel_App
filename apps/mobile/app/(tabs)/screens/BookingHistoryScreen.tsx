@@ -165,7 +165,7 @@ export default function BookingHistoryScreen({
         const tone = statusTone(item.status);
         return (
           <Pressable
-            onPress={() => navigation.navigate('Detail Location', { placeId: item.placeId })}
+            onPress={() => navigation.navigate('Booking Detail', { bookingId: item.id })}
             style={{
               borderRadius: 24,
               backgroundColor: '#fff',
@@ -232,6 +232,7 @@ export default function BookingHistoryScreen({
 
               {item.canCancel ? (
                 <Pressable
+                  testID={`cancel-booking-${item.id}`}
                   onPress={() => handleCancel(item.id)}
                   disabled={cancellingId === item.id}
                   style={{

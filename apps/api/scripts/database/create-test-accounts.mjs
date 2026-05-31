@@ -36,7 +36,7 @@ async function upsertUser({
   location,
   avatarUrl = null,
 }) {
-  const passwordHash = await bcrypt.hash("demo1234", 10);
+  const passwordHash = await bcrypt.hash("travel1234", 10);
   const emailVerifiedAt = new Date();
 
   return prisma.user.upsert({
@@ -67,25 +67,26 @@ async function main() {
   assertReadyConnection();
 
   const traveler = await upsertUser({
-    email: "demo@example.com",
+    email: "linh.nguyen@example.com",
     role: "TRAVELER",
-    fullName: "Alex Johnson",
-    username: "Alex_love_travel",
-    location: "Việt Nam",
-    avatarUrl: "https://th.bing.com/th/id/OIP.iY6OLSZImubhw9Yiwg6OuAHaHa?w=186&h=186&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3",
+    fullName: "Linh Nguyễn",
+    username: "linhnguyen",
+    location: "Đà Nẵng",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80",
   });
 
   const owner = await upsertUser({
-    email: "owner@example.com",
+    email: "minh.host@example.com",
     role: "OWNER",
-    fullName: "Owner Demo",
-    username: "owner_demo",
-    location: "Việt Nam",
+    fullName: "Minh Trần",
+    username: "minhhost",
+    location: "Hội An",
   });
 
   console.info("Đã tạo hoặc cập nhật 2 tài khoản test:");
-  console.info(`- Traveler: ${traveler.email} / demo1234`);
-  console.info(`- Owner: ${owner.email} / demo1234`);
+  console.info(`- Traveler: ${traveler.email} / travel1234`);
+  console.info(`- Owner: ${owner.email} / travel1234`);
   console.info("Cả hai tài khoản đã được xác minh email và có thể đăng nhập ngay.");
 }
 

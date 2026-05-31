@@ -18,6 +18,14 @@ bookingsRouter.get(
 );
 
 bookingsRouter.get(
+  "/:bookingId",
+  wrapAsync(async (req, res) => {
+    const data = await bookingsService.getMineDetail(req.user!.sub, String(req.params.bookingId));
+    sendOk(res, data);
+  })
+);
+
+bookingsRouter.get(
   "/",
   wrapAsync(async (req, res) => {
     const paging = parsePagination(req.query as Record<string, string | undefined>);
@@ -27,6 +35,14 @@ bookingsRouter.get(
       limit: result.limit,
       offset: result.offset,
     });
+  })
+);
+
+bookingsRouter.post(
+  "/quote",
+  wrapAsync(async (req, res) => {
+    const data = await bookingsService.quote(req.user!.sub, req.body);
+    sendOk(res, data);
   })
 );
 
@@ -41,7 +57,11 @@ bookingsRouter.post(
 bookingsRouter.post(
   "/:bookingId/cancel",
   wrapAsync(async (req, res) => {
-    const data = await bookingsService.cancel(req.user!.sub, String(req.params.bookingId));
+    const data = await bookingsService.cancel(
+      req.user!.sub,
+      String(req.params.bookingId),
+      req.body
+    );
     sendOk(res, data);
   })
 );

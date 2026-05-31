@@ -1,7 +1,7 @@
 appId: com.bincry.travelapp
 env:
-  OWNER_EMAIL: owner@example.com
-  OWNER_PASSWORD: secret123
+  OWNER_EMAIL: minh.host@example.com
+  OWNER_PASSWORD: travel1234
 ---
 - launchApp
 - tapOn: "Đăng nhập"

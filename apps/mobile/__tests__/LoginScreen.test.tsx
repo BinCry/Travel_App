@@ -22,7 +22,7 @@ describe("LoginScreen", () => {
     jest.spyOn(Alert, "alert").mockImplementation(() => undefined);
   });
 
-  it("báo lỗi khi thiếu email hoặc mật khẩu", () => {
+  it("shows an error when email or password is missing", () => {
     const screen = render(<LoginScreen navigation={navigation} />);
 
     fireEvent.press(screen.getByText("Đăng nhập"));
@@ -33,7 +33,7 @@ describe("LoginScreen", () => {
     );
   });
 
-  it("gọi login với email đã được trim", async () => {
+  it("trims the email before calling login", async () => {
     const screen = render(<LoginScreen navigation={navigation} />);
 
     fireEvent.changeText(screen.getByPlaceholderText("Địa chỉ email"), "  user@example.com  ");
@@ -45,12 +45,15 @@ describe("LoginScreen", () => {
     });
   });
 
-  it("hiển thị cảnh báo xác minh email khi backend trả EMAIL_NOT_VERIFIED", async () => {
+  it("shows the unverified email warning when backend returns EMAIL_NOT_VERIFIED", async () => {
     mockLogin.mockRejectedValueOnce(new Error("EMAIL_NOT_VERIFIED"));
     const screen = render(<LoginScreen navigation={navigation} />);
 
-    fireEvent.changeText(screen.getByPlaceholderText("Địa chỉ email"), "owner@example.com");
-    fireEvent.changeText(screen.getByPlaceholderText("Mật khẩu"), "secret123");
+    fireEvent.changeText(
+      screen.getByPlaceholderText("Địa chỉ email"),
+      "minh.host@example.com"
+    );
+    fireEvent.changeText(screen.getByPlaceholderText("Mật khẩu"), "travel1234");
     fireEvent.press(screen.getByText("Đăng nhập"));
 
     await waitFor(() => {

@@ -10,13 +10,13 @@ jest.mock("../app/(tabs)/context/AuthContext", () => ({
   useAuth: () => ({
     user: {
       id: 1,
-      email: "demo@example.com",
+      email: "linh.nguyen@example.com",
       emailVerified: true,
-      fullName: "Alex Johnson",
-      username: "Alex_love_travel",
-      location: "Viá»‡t Nam",
+      fullName: "Linh Nguyễn",
+      username: "linh_di_choi",
+      location: "Việt Nam",
       avatarUrl: "https://example.com/avatar.jpg",
-      name: "Alex Johnson",
+      name: "Linh Nguyễn",
       role: "traveler",
     },
   }),
@@ -31,7 +31,7 @@ describe("ProfileScreen", () => {
     const screen = render(<ProfileScreen navigation={navigation} />);
 
     expect(screen.getByTestId("profile-scroll-view")).toBeTruthy();
-    expect(screen.getByText("Alex Johnson")).toBeTruthy();
+    expect(screen.getByText("Linh Nguyễn")).toBeTruthy();
     expect(screen.getByText("Tài khoản & bảo mật")).toBeTruthy();
     expect(screen.getByText("Địa điểm đã lưu")).toBeTruthy();
     expect(screen.getByText("Bộ sưu tập")).toBeTruthy();

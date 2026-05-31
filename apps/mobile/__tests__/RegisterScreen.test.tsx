@@ -38,7 +38,7 @@ describe("RegisterScreen", () => {
     jest.spyOn(Alert, "alert").mockImplementation(() => undefined);
   });
 
-  it("yêu cầu đồng ý điều khoản trước khi đăng ký", () => {
+  it("requires accepting the terms before registration", () => {
     const screen = render(<RegisterScreen navigation={navigation} />);
 
     fireEvent.press(screen.getByText("Tạo tài khoản"));
@@ -49,27 +49,30 @@ describe("RegisterScreen", () => {
     );
   });
 
-  it("đăng ký owner đúng tham số và hiển thị hướng dẫn nhập OTP", async () => {
+  it("registers an owner account and shows the OTP guidance", async () => {
     mockRegister.mockResolvedValueOnce({
-      email: "owner@example.com",
+      email: "lan.owner@example.com",
       message: "Đã gửi mã OTP xác minh email.",
     });
 
     const screen = render(<RegisterScreen navigation={navigation} />);
 
-    fireEvent.changeText(screen.getByPlaceholderText("Họ và tên"), "Nguyễn Chủ Địa Điểm");
-    fireEvent.changeText(screen.getByPlaceholderText("Địa chỉ email"), "owner@example.com");
-    fireEvent.changeText(screen.getByPlaceholderText("Mật khẩu"), "secret123");
-    fireEvent.changeText(screen.getByPlaceholderText("Xác nhận mật khẩu"), "secret123");
+    fireEvent.changeText(screen.getByPlaceholderText("Họ và tên"), "Lan Trần");
+    fireEvent.changeText(
+      screen.getByPlaceholderText("Địa chỉ email"),
+      "lan.owner@example.com"
+    );
+    fireEvent.changeText(screen.getByPlaceholderText("Mật khẩu"), "travel1234");
+    fireEvent.changeText(screen.getByPlaceholderText("Xác nhận mật khẩu"), "travel1234");
     fireEvent.press(screen.getByText("Chủ địa điểm"));
     fireEvent.press(screen.getByTestId("agreement-checkbox"));
     fireEvent.press(screen.getByText("Tạo tài khoản"));
 
     await waitFor(() => {
       expect(mockRegister).toHaveBeenCalledWith(
-        "owner@example.com",
-        "secret123",
-        "Nguyễn Chủ Địa Điểm",
+        "lan.owner@example.com",
+        "travel1234",
+        "Lan Trần",
         "owner"
       );
     });

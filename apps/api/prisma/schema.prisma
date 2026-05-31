@@ -31,6 +31,11 @@ enum BookingStatus {
   REFUNDED
 }
 
+enum VoucherDiscountType {
+  FIXED_AMOUNT
+  PERCENTAGE
+}
+
 model User {
   id                    Int                    @id @default(autoincrement())
   email                 String                 @unique
@@ -106,6 +111,7 @@ model Place {
   favorites        Favorite[]
   collectionEntries CollectionPlace[]
   promotions       Promotion[]
+  vouchers         Voucher[]
   updates          PlaceUpdate[]
   bookingOptions   BookingOption[]
   bookings         Booking[]
@@ -157,11 +163,14 @@ model Review {
   rating    Int
   content   String
   createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
   place     Place        @relation(fields: [placeId], references: [id], onDelete: Cascade)
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   images    ReviewImage[]
   likes     ReviewLike[]
   reply     ReviewReply?
+
+  @@unique([placeId, userId])
 }
 
 model ReviewReply {
@@ -272,6 +281,8 @@ model BookingOption {
   title            String
   description      String?
   priceLabel       String?
+  basePriceAmount  Int                @default(0)
+  currency         String             @default("VND")
   durationMinutes  Int                @default(90)
   maxPartySize     Int                @default(2)
   isActive         Boolean            @default(true)
@@ -280,6 +291,7 @@ model BookingOption {
   place            Place              @relation(fields: [placeId], references: [id], onDelete: Cascade)
   slots            AvailabilitySlot[]
   bookings         Booking[]
+  vouchers         Voucher[]
 
   @@index([placeId, createdAt(sort: Desc)])
 }
@@ -305,18 +317,75 @@ model Booking {
   optionId     String
   slotId       String
   travelerId   Int
+  voucherId    String?
   partySize    Int
   note         String?
+  ownerDecisionNote String?
+  cancellationReason String?
+  unitPriceAmount Int        @default(0)
+  subtotalAmount Int         @default(0)
+  discountAmount Int         @default(0)
+  finalAmount   Int          @default(0)
+  currency      String       @default("VND")
+  appliedVoucherCode String?
   status       BookingStatus @default(PENDING)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   cancelledAt  DateTime?
+  confirmedAt  DateTime?
+  rejectedAt   DateTime?
+  completedAt  DateTime?
+  noShowAt     DateTime?
+  refundPendingAt DateTime?
+  refundedAt   DateTime?
   place        Place         @relation(fields: [placeId], references: [id], onDelete: Cascade)
   option       BookingOption @relation(fields: [optionId], references: [id], onDelete: Restrict)
   slot         AvailabilitySlot @relation(fields: [slotId], references: [id], onDelete: Restrict)
   traveler     User          @relation(fields: [travelerId], references: [id], onDelete: Cascade)
+  voucher      Voucher?      @relation(fields: [voucherId], references: [id], onDelete: SetNull)
+  statusHistory BookingStatusHistory[]
 
   @@index([travelerId, createdAt(sort: Desc)])
   @@index([placeId, createdAt(sort: Desc)])
   @@index([slotId, status])
+  @@index([voucherId])
+}
+
+model BookingStatusHistory {
+  id          String        @id @default(cuid())
+  bookingId    String
+  status       BookingStatus
+  note         String?
+  actorRole    UserRole?
+  actorUserId  Int?
+  actorName    String?
+  createdAt    DateTime     @default(now())
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt(sort: Desc)])
+}
+
+model Voucher {
+  id                String              @id @default(cuid())
+  placeId           String
+  optionId          String?
+  code              String              @unique
+  title             String
+  description       String?
+  isActive          Boolean             @default(true)
+  startsAt          DateTime?
+  endsAt            DateTime?
+  usageLimit        Int?
+  usedCount         Int                 @default(0)
+  discountType      VoucherDiscountType
+  discountValue     Int
+  maxDiscountAmount Int?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  place             Place               @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  option            BookingOption?      @relation(fields: [optionId], references: [id], onDelete: SetNull)
+  bookings          Booking[]
+
+  @@index([placeId, createdAt(sort: Desc)])
+  @@index([optionId, createdAt(sort: Desc)])
 }

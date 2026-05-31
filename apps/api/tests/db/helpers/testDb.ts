@@ -16,7 +16,9 @@ const TRUNCATE_SQL = `
     "PasswordResetOtp",
     "Notification",
     "Promotion",
+    "BookingStatusHistory",
     "Booking",
+    "Voucher",
     "AvailabilitySlot",
     "BookingOption",
     "TripStop",
@@ -131,6 +133,8 @@ type BookingOptionFixtureInput = {
   title?: string;
   description?: string | null;
   priceLabel?: string | null;
+  basePriceAmount?: number;
+  currency?: string;
   durationMinutes?: number;
   maxPartySize?: number;
   isActive?: boolean;
@@ -153,7 +157,33 @@ type BookingFixtureInput = {
   travelerId: number;
   partySize?: number;
   note?: string | null;
+  ownerDecisionNote?: string | null;
+  cancellationReason?: string | null;
+  unitPriceAmount?: number;
+  subtotalAmount?: number;
+  discountAmount?: number;
+  finalAmount?: number;
+  currency?: string;
+  appliedVoucherCode?: string | null;
+  voucherId?: string | null;
   status?: "DRAFT" | "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELLED" | "COMPLETED" | "NO_SHOW" | "REFUND_PENDING" | "REFUNDED";
+};
+
+type VoucherFixtureInput = {
+  id?: string;
+  placeId: string;
+  optionId?: string | null;
+  code?: string;
+  title?: string;
+  description?: string | null;
+  isActive?: boolean;
+  startsAt?: Date | null;
+  endsAt?: Date | null;
+  usageLimit?: number | null;
+  usedCount?: number;
+  discountType?: "FIXED_AMOUNT" | "PERCENTAGE";
+  discountValue?: number;
+  maxDiscountAmount?: number | null;
 };
 
 export async function resetDatabase() {
@@ -188,8 +218,8 @@ export async function createPlaceFixture(input: PlaceFixtureInput = {}) {
       category: input.category ?? "ATTRACTIONS",
       coverImageUrl: input.coverImageUrl ?? "https://example.com/place.jpg",
       featureLabel: input.featureLabel ?? "Đang mở cửa",
-      averageRating: input.averageRating ?? 4.5,
-      ratingCount: input.ratingCount ?? 12,
+      averageRating: input.averageRating ?? 0,
+      ratingCount: input.ratingCount ?? 0,
       about: input.about ?? "Mô tả thử nghiệm",
       priceLevel: input.priceLevel ?? 2,
       latitude: input.latitude ?? 16.0471,
@@ -219,7 +249,7 @@ export async function createPromotionFixture(
 }
 
 export async function createReviewFixture(input: ReviewFixtureInput) {
-  return prisma.review.create({
+  const review = await prisma.review.create({
     data: {
       id: input.id ?? randomUUID(),
       placeId: input.placeId,
@@ -228,6 +258,19 @@ export async function createReviewFixture(input: ReviewFixtureInput) {
       content: input.content ?? "Review thử nghiệm",
     },
   });
+  const aggregate = await prisma.review.aggregate({
+    where: { placeId: input.placeId },
+    _avg: { rating: true },
+    _count: true,
+  });
+  await prisma.place.update({
+    where: { id: input.placeId },
+    data: {
+      averageRating: Math.round((aggregate._avg.rating ?? 0) * 10) / 10,
+      ratingCount: aggregate._count,
+    },
+  });
+  return review;
 }
 
 export async function createReviewReplyFixture(input: ReviewReplyFixtureInput) {
@@ -315,6 +358,8 @@ export async function createBookingOptionFixture(input: BookingOptionFixtureInpu
       title: input.title ?? "Bàn tối cho 2 người",
       description: input.description ?? "Option booking thử nghiệm",
       priceLabel: input.priceLabel ?? "350.000đ / bàn",
+      basePriceAmount: input.basePriceAmount ?? 350000,
+      currency: input.currency ?? "VND",
       durationMinutes: input.durationMinutes ?? 90,
       maxPartySize: input.maxPartySize ?? 2,
       isActive: input.isActive ?? true,
@@ -336,16 +381,57 @@ export async function createAvailabilitySlotFixture(input: AvailabilitySlotFixtu
 }
 
 export async function createBookingFixture(input: BookingFixtureInput) {
-  return prisma.booking.create({
+  const booking = await prisma.booking.create({
     data: {
       id: input.id ?? randomUUID(),
       placeId: input.placeId,
       optionId: input.optionId,
       slotId: input.slotId,
       travelerId: input.travelerId,
+      voucherId: input.voucherId ?? null,
       partySize: input.partySize ?? 2,
       note: input.note ?? "Booking thử nghiệm",
+      ownerDecisionNote: input.ownerDecisionNote ?? null,
+      cancellationReason: input.cancellationReason ?? null,
+      unitPriceAmount: input.unitPriceAmount ?? 350000,
+      subtotalAmount: input.subtotalAmount ?? 350000,
+      discountAmount: input.discountAmount ?? 0,
+      finalAmount: input.finalAmount ?? 350000,
+      currency: input.currency ?? "VND",
+      appliedVoucherCode: input.appliedVoucherCode ?? null,
       status: input.status ?? "PENDING",
+    },
+  });
+  await prisma.bookingStatusHistory.create({
+    data: {
+      bookingId: booking.id,
+      status: booking.status,
+      note: booking.note,
+      actorRole: "TRAVELER",
+      actorUserId: booking.travelerId,
+      actorName: "Khách du lịch",
+    },
+  });
+  return booking;
+}
+
+export async function createVoucherFixture(input: VoucherFixtureInput) {
+  return prisma.voucher.create({
+    data: {
+      id: input.id ?? randomUUID(),
+      placeId: input.placeId,
+      optionId: input.optionId ?? null,
+      code: input.code ?? `SAVE${Math.floor(Math.random() * 10000)}`,
+      title: input.title ?? "Voucher thử nghiệm",
+      description: input.description ?? "Áp dụng cho booking hợp lệ",
+      isActive: input.isActive ?? true,
+      startsAt: input.startsAt ?? new Date("2026-01-01T00:00:00.000Z"),
+      endsAt: input.endsAt ?? new Date("2026-12-31T23:59:59.000Z"),
+      usageLimit: input.usageLimit ?? 20,
+      usedCount: input.usedCount ?? 0,
+      discountType: input.discountType ?? "FIXED_AMOUNT",
+      discountValue: input.discountValue ?? 50000,
+      maxDiscountAmount: input.maxDiscountAmount ?? null,
     },
   });
 }

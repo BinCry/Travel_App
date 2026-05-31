@@ -109,9 +109,20 @@ export default function UserReviewsScreen({
             <View style={screenStyles.actions}>
               <TouchableOpacity
                 style={screenStyles.primaryButton}
+                onPress={() =>
+                  navigation.navigate('All Reviews', {
+                    placeId: item.placeId,
+                    placeName: item.placeName,
+                  })
+                }
+              >
+                <Text style={screenStyles.primaryButtonText}>Sửa đánh giá</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={screenStyles.neutralButton}
                 onPress={() => navigation.navigate('Detail Location', { placeId: item.placeId })}
               >
-                  <Text style={screenStyles.primaryButtonText}>Xem địa điểm</Text>
+                <Text style={screenStyles.neutralButtonText}>Xem địa điểm</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={screenStyles.secondaryButton}
@@ -233,6 +244,18 @@ const screenStyles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#fff',
+    fontWeight: '700',
+  },
+  neutralButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#d7e4eb',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  neutralButtonText: {
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   secondaryButton: {

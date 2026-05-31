@@ -8,6 +8,7 @@ export * from "./contracts/collections.js";
 export * from "./contracts/notifications.js";
 export * from "./contracts/reviews.js";
 export * from "./contracts/bookings.js";
+export * from "./contracts/vouchers.js";
 export * from "./contracts/trips.js";
 export * from "./contracts/uploads.js";
 export * from "./contracts/users.js";

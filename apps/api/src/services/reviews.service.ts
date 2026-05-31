@@ -1,4 +1,5 @@
 import type {
+  MyPlaceReview,
   OwnerReviewReply,
   ReviewLikeToggleResponse,
   ReviewListItem,
@@ -9,6 +10,7 @@ import {
   reviewCreateRequestSchema,
   reviewLikeToggleSchema,
   reviewListItemSchema,
+  myPlaceReviewSchema,
   reviewMutationResultSchema,
   reviewUpdateRequestSchema,
   userReviewListItemSchema,
@@ -76,6 +78,68 @@ function mapReviewListItem(r: {
     likes: r._count.likes,
     ownerReply,
   });
+}
+
+function mapMyPlaceReview(r: {
+  id: string;
+  placeId: string;
+  rating: number;
+  content: string;
+  createdAt: Date;
+  images: { url: string }[];
+  _count: { likes: number };
+  reply: {
+    id: string;
+    content: string;
+    createdAt: Date;
+    owner: { fullName: string | null; username: string | null };
+  } | null;
+}): MyPlaceReview {
+  return myPlaceReviewSchema.parse({
+    id: r.id,
+    placeId: r.placeId,
+    rating: r.rating,
+    date: r.createdAt.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }),
+    content: r.content,
+    imageUrls: r.images.map((i) => i.url),
+    likes: r._count.likes,
+    ownerReply: r.reply
+      ? {
+          id: r.reply.id,
+          ownerName: r.reply.owner.fullName || r.reply.owner.username || "Chủ địa điểm",
+          content: r.reply.content,
+          date: r.reply.createdAt.toLocaleDateString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          }),
+        }
+      : null,
+  });
+}
+
+async function assertTraveler(userId: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      role: true,
+    },
+  });
+
+  if (!user) {
+    throw Object.assign(new Error("ACCOUNT_NOT_FOUND"), { statusCode: 404 });
+  }
+
+  if (user.role !== "TRAVELER") {
+    throw Object.assign(new Error("FORBIDDEN"), { statusCode: 403 });
+  }
+
+  return user;
 }
 
 export const reviewsService = {
@@ -177,10 +241,48 @@ export const reviewsService = {
     };
   },
 
+  async getMineForPlace(placeId: string, userId: number): Promise<MyPlaceReview | null> {
+    await assertTraveler(userId);
+
+    const review = await prisma.review.findUnique({
+      where: {
+        placeId_userId: {
+          placeId,
+          userId,
+        },
+      },
+      include: {
+        images: true,
+        _count: { select: { likes: true } },
+        reply: {
+          include: {
+            owner: { select: { fullName: true, username: true } },
+          },
+        },
+      },
+    });
+
+    return review ? mapMyPlaceReview(review) : null;
+  },
+
   async create(placeId: string, userId: number, body: unknown) {
+    await assertTraveler(userId);
     const data = reviewCreateRequestSchema.parse(body);
     const place = await prisma.place.findUnique({ where: { id: placeId } });
     if (!place) throw Object.assign(new Error("PLACE_NOT_FOUND"), { statusCode: 404 });
+
+    const existing = await prisma.review.findUnique({
+      where: {
+        placeId_userId: {
+          placeId,
+          userId,
+        },
+      },
+      select: { id: true },
+    });
+    if (existing) {
+      throw Object.assign(new Error("REVIEW_ALREADY_EXISTS"), { statusCode: 409 });
+    }
 
     const rev = await prisma.review.create({
       data: {
@@ -215,8 +317,16 @@ export const reviewsService = {
   },
 
   async update(reviewId: string, userId: number, body: unknown): Promise<ReviewMutationResult> {
+    await assertTraveler(userId);
     const data = reviewUpdateRequestSchema.parse(body);
-    const rev = await prisma.review.findUnique({ where: { id: reviewId } });
+    const rev = await prisma.review.findUnique({
+      where: { id: reviewId },
+      include: {
+        reply: {
+          select: { id: true },
+        },
+      },
+    });
     if (!rev) throw Object.assign(new Error("REVIEW_NOT_FOUND"), { statusCode: 404 });
     if (rev.userId !== userId)
       throw Object.assign(new Error("FORBIDDEN"), { statusCode: 403 });
@@ -238,12 +348,18 @@ export const reviewsService = {
           ...(data.content !== undefined ? { content: data.content } : {}),
         },
       });
+      if (rev.reply) {
+        await tx.reviewReply.delete({
+          where: { reviewId },
+        });
+      }
     });
     await recalcPlaceStats(placeId);
     return reviewMutationResultSchema.parse({ id: reviewId });
   },
 
   async remove(reviewId: string, userId: number) {
+    await assertTraveler(userId);
     const rev = await prisma.review.findUnique({ where: { id: reviewId } });
     if (!rev) throw Object.assign(new Error("REVIEW_NOT_FOUND"), { statusCode: 404 });
     if (rev.userId !== userId)

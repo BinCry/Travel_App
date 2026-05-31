@@ -13,6 +13,7 @@ export default function ProfileScreen({ navigation }: AppNavigationOnlyProps<'Pr
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const displayName = user?.fullName || user?.name || 'Người dùng';
+  const isOwner = user?.role === 'owner';
 
   return (
     <SafeAreaView style={styles.safeArea} edges={TOP_SAFE_AREA_EDGES}>
@@ -141,35 +142,39 @@ export default function ProfileScreen({ navigation }: AppNavigationOnlyProps<'Pr
             <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.profileMenuItemContainer}
-            onPress={() => navigation.navigate('Booking History')}>
-            <View style={[styles.profileMenuItemIcon, { backgroundColor: '#fef3c7' }]}>
-              <Ionicons name="calendar-outline" size={28} color="#d97706" />
-            </View>
-            <View style={styles.profileMenuTextContainer}>
-              <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Lịch đặt chỗ</Text>
-              <Text style={{ color: '#928d8d', fontSize: 15 }}>
-                Theo dõi trạng thái booking và hủy nhanh khi cần
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
-          </TouchableOpacity>
+          {!isOwner ? (
+            <TouchableOpacity
+              style={styles.profileMenuItemContainer}
+              onPress={() => navigation.navigate('Booking History')}>
+              <View style={[styles.profileMenuItemIcon, { backgroundColor: '#fef3c7' }]}>
+                <Ionicons name="calendar-outline" size={28} color="#d97706" />
+              </View>
+              <View style={styles.profileMenuTextContainer}>
+                <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Lịch đặt chỗ</Text>
+                <Text style={{ color: '#928d8d', fontSize: 15 }}>
+                  Theo dõi trạng thái booking và hủy nhanh khi cần
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
+            </TouchableOpacity>
+          ) : null}
 
-          <TouchableOpacity
-            style={styles.profileMenuItemContainer}
-            onPress={() => navigation.navigate('Your Reviews')}>
-            <View style={[styles.profileMenuItemIcon, { backgroundColor: '#daf7b5' }]}>
-              <MaterialIcons name="rate-review" size={28} color="#a4c626" />
-            </View>
-            <View style={styles.profileMenuTextContainer}>
-              <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Đánh giá của bạn</Text>
-              <Text style={{ color: '#928d8d', fontSize: 15 }}>
-                Quản lý các đánh giá bạn đã đăng
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
-          </TouchableOpacity>
+          {!isOwner ? (
+            <TouchableOpacity
+              style={styles.profileMenuItemContainer}
+              onPress={() => navigation.navigate('Your Reviews')}>
+              <View style={[styles.profileMenuItemIcon, { backgroundColor: '#daf7b5' }]}>
+                <MaterialIcons name="rate-review" size={28} color="#a4c626" />
+              </View>
+              <View style={styles.profileMenuTextContainer}>
+                <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Đánh giá của bạn</Text>
+                <Text style={{ color: '#928d8d', fontSize: 15 }}>
+                  Quản lý các đánh giá bạn đã đăng
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
+            </TouchableOpacity>
+          ) : null}
 
           <TouchableOpacity
             style={styles.profileMenuItemContainer}
